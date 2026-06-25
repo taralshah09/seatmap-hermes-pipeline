@@ -159,6 +159,7 @@ export function injectEditor(html) {
 .map [data-sec].dragging{outline:2px dashed #1f6feb;outline-offset:3px;opacity:.92;}
 .map [data-sec].selected{outline:2px solid #1f6feb;outline-offset:3px;}
 .map .row.row-selected{outline:2px solid #10b981;outline-offset:2px;border-radius:4px;}
+body:not(.delete-mode) .map .rl{cursor:pointer;}
 #editor-bar button.ghost{border-color:#1f6feb;}
 body.dragging-active{user-select:none;}
 #rot-handle{position:absolute;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;background:#fff;border:2px solid #1f6feb;cursor:grab;z-index:60;display:none;box-shadow:0 1px 3px rgba(0,0,0,.35);}
@@ -174,7 +175,7 @@ body.delete-mode .map .seat,body.delete-mode .map .rl,body.delete-mode .map .sl{
   const editorJS = `<script>
 (function(){
   var BASE_CSS=${JSON.stringify(ORIENT_BASE_CSS)};
-  var ARRANGE_HINT='Click a section → Add row · click a row label → Add seats · drag to move · knob to rotate';
+  var ARRANGE_HINT='Click a section → Add row · click a row label → Add seats (double-click it to rename) · drag to move · knob to rotate';
   var map=document.querySelector('.map'); if(!map) return;
   var mode='arrange';
   var active=null,gx=0,gy=0,moved=false,suppress=false;
@@ -295,6 +296,15 @@ body.delete-mode .map .seat,body.delete-mode .map .rl,body.delete-mode .map .sl{
     for(var i=1;i<=n;i++) sw.appendChild(makeSeat(label,max+i));
     pushHistory();
   }
+  function editRowLabel(row){
+    if(!row) return;
+    var cur=(row.querySelector('.rl')||{}).textContent||'';
+    var next=prompt('Row label:',cur); if(next===null) return;
+    next=next.trim(); if(!next) return;
+    [].forEach.call(row.querySelectorAll('.rl'),function(s){s.textContent=next;});   // both side labels
+    [].forEach.call(row.querySelectorAll('.seat'),function(b){b.title=next+(b.textContent||'');});  // keep tooltips in sync
+    pushHistory();
+  }
 
   // ---- drag / row-pick (arrange mode) ----
   map.addEventListener('pointerdown',function(e){
@@ -308,6 +318,13 @@ body.delete-mode .map .seat,body.delete-mode .map .rl,body.delete-mode .map .sl{
     el.style.left=c.x+'px'; el.style.top=c.y+'px';
     el.classList.add('dragging'); document.body.classList.add('dragging-active');
     e.preventDefault();
+  });
+  // double-click a row label to rename the row (arrange mode only)
+  map.addEventListener('dblclick',function(e){
+    if(mode!=='arrange') return;
+    var rl=e.target.closest('.rl'); if(!rl) return;
+    e.preventDefault(); e.stopPropagation();
+    editRowLabel(rl.closest('.row'));
   });
   window.addEventListener('pointermove',function(e){
     if(rotating&&selectedSec){
