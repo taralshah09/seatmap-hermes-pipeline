@@ -158,6 +158,8 @@ export function injectEditor(html) {
 .map [data-sec]{cursor:move;}
 .map [data-sec].dragging{outline:2px dashed #1f6feb;outline-offset:3px;opacity:.92;}
 .map [data-sec].selected{outline:2px solid #1f6feb;outline-offset:3px;}
+.map .row.row-selected{outline:2px solid #10b981;outline-offset:2px;border-radius:4px;}
+#editor-bar button.ghost{border-color:#1f6feb;}
 body.dragging-active{user-select:none;}
 #rot-handle{position:absolute;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;background:#fff;border:2px solid #1f6feb;cursor:grab;z-index:60;display:none;box-shadow:0 1px 3px rgba(0,0,0,.35);}
 #rot-handle::after{content:'';position:absolute;left:50%;top:100%;width:2px;height:16px;background:#1f6feb;transform:translateX(-50%);}
@@ -172,10 +174,11 @@ body.delete-mode .map .seat,body.delete-mode .map .rl,body.delete-mode .map .sl{
   const editorJS = `<script>
 (function(){
   var BASE_CSS=${JSON.stringify(ORIENT_BASE_CSS)};
+  var ARRANGE_HINT='Click a section → Add row · click a row label → Add seats · drag to move · knob to rotate';
   var map=document.querySelector('.map'); if(!map) return;
   var mode='arrange';
   var active=null,gx=0,gy=0,moved=false,suppress=false;
-  var selected=null,rotating=false,rcx=0,rcy=0,startAng=0,startRot=0;
+  var selectedSec=null,selectedRow=null,rotating=false,rcx=0,rcy=0,startAng=0,startRot=0;
   function center(el){var r=el.getBoundingClientRect(),m=map.getBoundingClientRect();return {x:r.left+r.width/2-m.left,y:r.top+r.height/2-m.top};}
   // Split a computed transform into its scale and rotation (deg). Survives a
   // reload where the baked transform is "...rotate(r) scale(s)" — reading .a
@@ -197,35 +200,107 @@ body.delete-mode .map .seat,body.delete-mode .map .rl,body.delete-mode .map .sl{
     if(el.dataset.rot===undefined) el.dataset.rot=d.rot;
   });
 
+  // ---- history (undo/redo) ----
+  // The canvas markup holds everything that changes — positions (inline
+  // left/top), rotation/scale (data-attrs), and additions/deletions of
+  // rows/seats. Snapshot map.innerHTML per committed action. The rotation
+  // handle is pulled out first (it has live listeners we must not clone) and
+  // transient highlight classes are stripped so a restored state is clean.
+  var hist=[],hidx=-1;
+  function snapshot(){
+    var a1=map.querySelector('[data-sec].selected'),a2=map.querySelector('.dragging'),a3=map.querySelector('.row-selected');
+    if(a1)a1.classList.remove('selected'); if(a2)a2.classList.remove('dragging'); if(a3)a3.classList.remove('row-selected');
+    handle.remove();
+    var snap=map.innerHTML;
+    map.appendChild(handle);
+    if(a1)a1.classList.add('selected'); if(a2)a2.classList.add('dragging'); if(a3)a3.classList.add('row-selected');
+    return snap;
+  }
+  function pushHistory(){
+    var s=snapshot();
+    if(hidx>=0&&hist[hidx]===s) return;            // skip no-op actions
+    hist=hist.slice(0,hidx+1); hist.push(s); hidx=hist.length-1;
+    if(hist.length>100){hist.shift();hidx--;}
+    updateUndo();
+  }
+  function restore(snap){
+    select(null); selectRow(null);
+    handle.remove();
+    map.innerHTML=snap;                            // delegated listeners on map survive this
+    map.appendChild(handle);
+    updateUndo();
+  }
+  function undo(){ if(hidx>0){hidx--; restore(hist[hidx]);} }
+  function redo(){ if(hidx<hist.length-1){hidx++; restore(hist[hidx]);} }
+
   // ---- selection + rotation handle ----
   var handle=document.createElement('div'); handle.id='rot-handle'; map.appendChild(handle);
   function placeHandle(){
-    if(!selected){handle.style.display='none';return;}
-    var r=selected.getBoundingClientRect(),m=map.getBoundingClientRect();
+    if(!selectedSec){handle.style.display='none';return;}
+    var r=selectedSec.getBoundingClientRect(),m=map.getBoundingClientRect();
     handle.style.display='block';
     handle.style.left=(r.left+r.width/2-m.left)+'px';
     handle.style.top=(r.top-m.top-18)+'px';
   }
   function select(el){
-    if(selected) selected.classList.remove('selected');
-    selected=el;
-    if(el) el.classList.add('selected');
-    placeHandle();
+    if(selectedSec) selectedSec.classList.remove('selected');
+    selectedSec=el;
+    if(el){el.classList.add('selected'); if(selectedRow){selectedRow.classList.remove('row-selected');selectedRow=null;}}
+    placeHandle(); updateAdd();
+  }
+  function selectRow(row){
+    if(selectedRow) selectedRow.classList.remove('row-selected');
+    selectedRow=row;
+    if(row){row.classList.add('row-selected'); if(selectedSec){selectedSec.classList.remove('selected');selectedSec=null;placeHandle();}}
+    updateAdd();
   }
   handle.addEventListener('pointerdown',function(e){
-    if(!selected) return;
+    if(!selectedSec) return;
     rotating=true; handle.classList.add('turning');
-    var r=selected.getBoundingClientRect();
+    var r=selectedSec.getBoundingClientRect();
     rcx=r.left+r.width/2; rcy=r.top+r.height/2;
     startAng=Math.atan2(e.clientY-rcy,e.clientX-rcx)*180/Math.PI;
-    startRot=parseFloat(selected.dataset.rot)||0;
+    startRot=parseFloat(selectedSec.dataset.rot)||0;
     document.body.classList.add('dragging-active');
     e.preventDefault(); e.stopPropagation();
   });
 
-  // ---- drag (arrange mode) ----
+  // ---- builders (match render.js markup so new rows/seats behave like the rest) ----
+  function makeSeat(label,n){var b=document.createElement('button');b.className='seat available';b.title=label+n;b.textContent=n;return b;}
+  function makeRow(label,from,to){
+    var row=document.createElement('div');row.className='row';
+    var l1=document.createElement('span');l1.className='rl';l1.textContent=label;
+    var sw=document.createElement('div');sw.className='sw';
+    for(var n=from;n<=to;n++) sw.appendChild(makeSeat(label,n));
+    var l2=document.createElement('span');l2.className='rl';l2.textContent=label;
+    row.appendChild(l1);row.appendChild(sw);row.appendChild(l2);
+    return row;
+  }
+  function addRow(){
+    if(!selectedSec){alert('Select a section first (click it), then Add row.');return;}
+    var label=prompt('New row label (e.g. G):',''); if(label===null) return; label=(label.trim()||'?');
+    var from=parseInt(prompt('First seat number:','1'),10);
+    var to=parseInt(prompt('Last seat number:',String(isNaN(from)?1:from)),10);
+    if(isNaN(from)||isNaN(to)||to<from){alert('Invalid seat range — last must be ≥ first.');return;}
+    selectedSec.appendChild(makeRow(label,from,to));
+    placeHandle(); pushHistory();
+  }
+  function addSeats(){
+    if(!selectedRow){alert('Select a row first (click its row label on either side), then Add seats.');return;}
+    var n=parseInt(prompt('How many seats to add at the end of this row?','1'),10);
+    if(isNaN(n)||n<1){alert('Enter a positive number.');return;}
+    var sw=selectedRow.querySelector('.sw'); if(!sw) return;
+    var rl=selectedRow.querySelector('.rl'),label=rl?rl.textContent:'';
+    var max=0;[].forEach.call(sw.querySelectorAll('.seat'),function(s){var v=parseInt(s.textContent,10);if(!isNaN(v)&&v>max)max=v;});
+    for(var i=1;i<=n;i++) sw.appendChild(makeSeat(label,max+i));
+    pushHistory();
+  }
+
+  // ---- drag / row-pick (arrange mode) ----
   map.addEventListener('pointerdown',function(e){
     if(mode!=='arrange') return;
+    var rl=e.target.closest('.rl');
+    if(rl){ selectRow(rl.closest('.row')); e.preventDefault(); return; }   // row label → select row, no drag
     var el=e.target.closest('[data-sec]'); if(!el) return;
     active=el; moved=false; select(el);
     var m=map.getBoundingClientRect(),c=center(el);
@@ -235,11 +310,11 @@ body.delete-mode .map .seat,body.delete-mode .map .rl,body.delete-mode .map .sl{
     e.preventDefault();
   });
   window.addEventListener('pointermove',function(e){
-    if(rotating&&selected){
+    if(rotating&&selectedSec){
       var ang=Math.atan2(e.clientY-rcy,e.clientX-rcx)*180/Math.PI;
       var rot=startRot+(ang-startAng);
       if(e.shiftKey) rot=Math.round(rot/15)*15;   // hold Shift to snap to 15°
-      selected.dataset.rot=rot; applyT(selected); placeHandle();
+      selectedSec.dataset.rot=rot; applyT(selectedSec); placeHandle();
       return;
     }
     if(!active) return;
@@ -247,20 +322,23 @@ body.delete-mode .map .seat,body.delete-mode .map .rl,body.delete-mode .map .sl{
     var x=Math.max(0,Math.min(m.width,e.clientX-m.left-gx));
     var y=Math.max(0,Math.min(m.height,e.clientY-m.top-gy));
     active.style.left=x+'px'; active.style.top=y+'px'; moved=true;
-    if(selected===active) placeHandle();
+    if(selectedSec===active) placeHandle();
   });
   window.addEventListener('pointerup',function(){
-    if(rotating){rotating=false;handle.classList.remove('turning');document.body.classList.remove('dragging-active');return;}
+    if(rotating){rotating=false;handle.classList.remove('turning');document.body.classList.remove('dragging-active');pushHistory();return;}
     if(!active) return;
     active.classList.remove('dragging'); document.body.classList.remove('dragging-active');
-    if(moved) suppress=true; active=null;
+    var didMove=moved; if(moved) suppress=true; active=null;
+    if(didMove) pushHistory();
   });
 
-  // ---- selection (delete mode) + drag-click suppression ----
+  // ---- click: booking (arrange) / marking (delete) / drag-suppression ----
   map.addEventListener('click',function(e){
     if(suppress){e.stopPropagation();e.preventDefault();suppress=false;return;}
     if(mode==='arrange'){
-      if(!e.target.closest('[data-sec]')&&e.target!==handle) select(null);
+      var bk=e.target.closest('.seat');
+      if(bk&&!bk.classList.contains('restricted')){bk.classList.toggle('selected');return;}  // book/unbook
+      if(!e.target.closest('[data-sec]')&&e.target!==handle){select(null);selectRow(null);}
       return;
     }
     var seat=e.target.closest('.seat'), rl=e.target.closest('.rl'), sl=e.target.closest('.sl');
@@ -274,12 +352,12 @@ body.delete-mode .map .seat,body.delete-mode .map .rl,body.delete-mode .map .sl{
     [].forEach.call(marks(),function(s){s.remove();});
     map.querySelectorAll('.row').forEach(function(row){var sw=row.querySelector('.sw');if(!sw||sw.querySelectorAll('.seat').length===0)row.remove();});
     map.querySelectorAll('[data-sec]').forEach(function(sec){if(sec.classList.contains('stage'))return;if(sec.querySelectorAll('.seat').length===0)sec.remove();});
-    updateCount();
+    updateCount(); pushHistory();
   }
 
   // ---- save ----
   function save(){
-    select(null);
+    select(null); selectRow(null);
     var m=map.getBoundingClientRect(),rules='';
     map.querySelectorAll('[data-sec]').forEach(function(el){
       var c=center(el),x=(c.x/m.width*100).toFixed(2),y=(c.y/m.height*100).toFixed(2);
@@ -302,26 +380,46 @@ body.delete-mode .map .seat,body.delete-mode .map .rl,body.delete-mode .map .sl{
 
   // ---- toolbar ----
   var bar=document.createElement('div'); bar.id='editor-bar';
-  var hint=document.createElement('span'); hint.className='hint'; hint.textContent='Drag to move · click a section, then drag the knob to rotate (Shift = snap 15°)';
+  var hint=document.createElement('span'); hint.className='hint'; hint.textContent=ARRANGE_HINT;
+  var addRowBtn=document.createElement('button'); addRowBtn.className='ghost'; addRowBtn.textContent='Add row';
+  var addSeatBtn=document.createElement('button'); addSeatBtn.className='ghost'; addSeatBtn.textContent='Add seats';
+  var undoBtn=document.createElement('button'); undoBtn.className='ghost'; undoBtn.textContent='Undo'; undoBtn.disabled=true;
+  var redoBtn=document.createElement('button'); redoBtn.className='ghost'; redoBtn.textContent='Redo'; redoBtn.disabled=true;
   var delToggle=document.createElement('button'); delToggle.className='ghost'; delToggle.textContent='Delete mode';
   var delApply=document.createElement('button'); delApply.className='danger'; delApply.textContent='Delete selected'; delApply.disabled=true;
   var saveBtn=document.createElement('button'); saveBtn.textContent='Save layout';
   function updateCount(){var n=marks().length; delApply.disabled=(mode!=='delete'||n===0); delApply.textContent='Delete selected'+(n?' ('+n+')':'');}
+  function updateUndo(){undoBtn.disabled=hidx<=0; redoBtn.disabled=hidx>=hist.length-1;}
+  function updateAdd(){addRowBtn.disabled=(mode!=='arrange'||!selectedSec); addSeatBtn.disabled=(mode!=='arrange'||!selectedRow);}
   delToggle.addEventListener('click',function(){
-    if(mode==='delete'){mode='arrange';document.body.classList.remove('delete-mode');delToggle.className='ghost';hint.textContent='Drag to move · click a section, then drag the knob to rotate (Shift = snap 15°)';setMark(marks(),false);}
-    else{mode='delete';document.body.classList.add('delete-mode');delToggle.className='danger';hint.textContent='Tap seats, or a row/section label, to mark — then Delete selected';select(null);}
-    updateCount();
+    if(mode==='delete'){mode='arrange';document.body.classList.remove('delete-mode');delToggle.className='ghost';hint.textContent=ARRANGE_HINT;setMark(marks(),false);}
+    else{mode='delete';document.body.classList.add('delete-mode');delToggle.className='danger';hint.textContent='Tap seats, or a row/section label, to mark — then Delete selected';select(null);selectRow(null);}
+    updateCount(); updateAdd();
   });
+  addRowBtn.addEventListener('click',addRow);
+  addSeatBtn.addEventListener('click',addSeats);
+  undoBtn.addEventListener('click',undo);
+  redoBtn.addEventListener('click',redo);
   delApply.addEventListener('click',applyDelete);
   saveBtn.addEventListener('click',save);
-  bar.appendChild(hint); bar.appendChild(delToggle); bar.appendChild(delApply); bar.appendChild(saveBtn);
+  bar.appendChild(hint); bar.appendChild(addRowBtn); bar.appendChild(addSeatBtn); bar.appendChild(undoBtn); bar.appendChild(redoBtn); bar.appendChild(delToggle); bar.appendChild(delApply); bar.appendChild(saveBtn);
   document.body.appendChild(bar);
+  updateAdd(); pushHistory();   // baseline snapshot so the first undo returns here
 })();
 </` + `script>`;
 
-  return html
-    .replace('</head>', `${editorCSS}\n</head>`)
-    .replace('</body>', `${editorJS}\n</body>`);
+  // Drop the renderer's per-seat booking script — its listeners are bound to
+  // individual seats and would be lost the first time undo/redo replaces
+  // map.innerHTML. The editor re-implements booking via event delegation on
+  // .map (see the arrange-mode click handler), which survives that and also
+  // covers newly-added seats.
+  let out = html.replace(/<script>document\.querySelectorAll\("\.seat[\s\S]*?<\/script>\s*/i, '');
+  // Inject before the close tags when present; otherwise append, so a malformed
+  // or truncated upstream document still gets the styles and the toolbar rather
+  // than silently dropping them.
+  out = out.includes('</head>') ? out.replace('</head>', `${editorCSS}\n</head>`) : out + editorCSS;
+  out = out.includes('</body>') ? out.replace('</body>', `${editorJS}\n</body>`) : out + editorJS;
+  return out;
 }
 
 // Inject (or replace) the orientation style block. Placed last in <head> so it

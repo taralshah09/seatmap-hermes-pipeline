@@ -104,13 +104,28 @@ async function patchHTML(currentHTML, issues, cssHints = []) {
     .replace('CSS_HINTS_PLACEHOLDER', cssHints.join('\n'))
     .replace('HTML_PLACEHOLDER', currentHTML);
 
-  const response = await client.messages.create({
+  // Stream: at this token budget a non-streaming request trips the SDK's
+  // 10-minute guard. Streaming also lets the whole-document rewrite finish
+  // without an artificial timeout.
+  const stream = client.messages.stream({
     model: 'claude-sonnet-4-6',
-    max_tokens: 8000,
+    max_tokens: 32000,
     messages: [{ role: 'user', content: prompt }]
   });
+  const response = await stream.finalMessage();
 
-  return response.content[0].text.trim().replace(/^```(?:html)?\s*/i, '').replace(/\s*```$/, '');
+  const out = response.content[0].text.trim().replace(/^```(?:html)?\s*/i, '').replace(/\s*```$/, '');
+
+  // The model rewrites the WHOLE document each pass; for large maps that can
+  // exceed the token budget and come back cut off mid-tag. A truncated patch
+  // must never become the saved layout (it loses </body>, so the editor's
+  // toolbar can't inject and seats go missing). Reject it and keep the last
+  // good HTML instead.
+  if (response.stop_reason === 'max_tokens' || !/<\/html\s*>\s*$/i.test(out)) {
+    console.warn(`  Warning: patch ${response.stop_reason === 'max_tokens' ? 'hit the token limit' : 'came back without a closing </html>'} — discarding it and keeping the previous valid HTML.`);
+    return null;
+  }
+  return out;
 }
 
 export async function runPlaywrightLoop(originalImagePath, initialHTML, outputDir) {
@@ -158,7 +173,12 @@ export async function runPlaywrightLoop(originalImagePath, initialHTML, outputDi
       break;
     }
 
-    currentHTML = await patchHTML(currentHTML, diff.issues, diff.cssHints);
+    const patched = await patchHTML(currentHTML, diff.issues, diff.cssHints);
+    if (!patched) {
+      console.log('No valid patch produced — stopping with the best valid iteration so far.');
+      break;
+    }
+    currentHTML = patched;
   }
 
   const finalPath = path.join(outputDir, 'seatmap-final.html');
