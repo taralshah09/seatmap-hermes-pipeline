@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Seatmap</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #f8fafc; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px 10px; }
+
+  /* ── overall layout ── */
+  .tier { display: grid; grid-template-columns: auto 1fr auto; gap: 16px; width: 100%; max-width: 1200px; align-items: end; }
+  .tier-upper { margin-bottom: 12px; }
+  .tier-lower { margin-bottom: 16px; align-items: center; }
+
+  .cell { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .cell-left  { align-items: flex-end; }
+  .cell-right { align-items: flex-start; }
+  .cell-center { align-items: center; }
+
+  /* ── sections ── */
+  .section { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .section-label { font-size: 10px; font-weight: 700; color: #666; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
+
+  /* ── rows ── */
+  .row { display: flex; align-items: center; gap: 3px; }
+  .row-label { font-size: 9px; font-weight: 700; color: #999; width: 16px; text-align: center; flex-shrink: 0; }
+  .row-label.hidden { visibility: hidden; }
+  .seats { display: flex; gap: 2px; flex-wrap: nowrap; }
+
+  /* ── seats ── */
+  .seat { width: 18px; height: 18px; border-radius: 3px; border: 1px solid #bcd;
+          background: #e8f4fd; font-size: 7px; cursor: pointer; color: #334;
+          display: flex; align-items: center; justify-content: center;
+          transition: background 0.12s; flex-shrink: 0; }
+  .seat:hover { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+  .seat.selected { background: #1d4ed8; color: #fff; border-color: #1d4ed8; }
+  .seat.wheelchair { background: #fef3c7; border-color: #f59e0b; }
+  .seat.companion  { background: #d1fae5; border-color: #10b981; }
+  .seat.restricted { background: #fee2e2; border-color: #ef4444; opacity: 0.55; cursor: not-allowed; }
+
+  /* ── seat color zones ── */
+  /* Left section: rows 1-3 cyan/blue, rows 4-5 orange, rows 6-7 red, rest cyan */
+  #section-left .row[data-row-id="1"] .seat,
+  #section-left .row[data-row-id="2"] .seat,
+  #section-left .row[data-row-id="3"] .seat { background: #bfefff; border-color: #5bc8e8; }
+  #section-left .row[data-row-id="4"] .seat,
+  #section-left .row[data-row-id="5"] .seat { background: #ffe0b2; border-color: #f59e0b; }
+  #section-left .row[data-row-id="6"] .seat,
+  #section-left .row[data-row-id="7"] .seat { background: #ffcccc; border-color: #ef4444; }
+  #section-left .row[data-row-id="8"] .seat,
+  #section-left .row[data-row-id="9"] .seat,
+  #section-left .row[data-row-id="10"] .seat,
+  #section-left .row[data-row-id="11"] .seat,
+  #section-left .row[data-row-id="12"] .seat,
+  #section-left .row[data-row-id="13"] .seat { background: #bfefff; border-color: #5bc8e8; }
+
+  /* Right section color zones */
+  #section-right .row .seat[data-seat="16"],
+  #section-right .row .seat[data-seat="17"],
+  #section-right .row .seat[data-seat="18"],
+  #section-right .row .seat[data-seat="19"],
+  #section-right .row .seat[data-seat="20"],
+  #section-right .row .seat[data-seat="21"],
+  #section-right .row .seat[data-seat="22"] { background: #ffcccc; border-color: #ef4444; }
+  #section-right .row .seat[data-seat="23"],
+  #section-right .row .seat[data-seat="24"],
+  #section-right .row .seat[data-seat="25"] { background: #ffe0b2; border-color: #f59e0b; }
+  #section-right .row .seat[data-seat="26"],
+  #section-right .row .seat[data-seat="27"],
+  #section-right .row .seat[data-seat="28"],
+  #section-right .row .seat[data-seat="29"],
+  #section-right .row .seat[data-seat="30"],
+  #section-right .row .seat[data-seat="31"] { background: #bfefff; border-color: #5bc8e8; }
+
+  /* Center section color zones */
+  #section-center .row[data-row-id="A"] .seat,
+  #section-center .row[data-row-id="B"] .seat,
+  #section-center .row[data-row-id="C"] .seat,
+  #section-center .row[data-row-id="D"] .seat { background: #ffcccc; border-color: #ef4444; }
+  #section-center .row[data-row-id="E"] .seat,
+  #section-center .row[data-row-id="F"] .seat,
+  #section-center .row[data-row-id="G"] .seat,
+  #section-center .row[data-row-id="H"] .seat,
+  #section-center .row[data-row-id="J"] .seat,
+  #section-center .row[data-row-id="K"] .seat,
+  #section-center .row[data-row-id="L"] .seat { background: #ffe0b2; border-color: #f59e0b; }
+
+  /* ── stage ── */
+  .stage-wrap { width: 100%; max-width: 1200px; display: flex; justify-content: center; margin-bottom: 24px; }
+  .stage { width: 280px; height: 36px; background: #1a1a2e; color: #fff; text-align: center;
+           line-height: 36px; border-radius: 6px 6px 0 0; font-size: 12px; letter-spacing: 3px; font-weight: 600; }
+
+  /* ── stage at top ── */
+  .stage-top-wrap { width: 100%; max-width: 1200px; display: flex; justify-content: center; margin-bottom: 8px; }
+  .stage-top { width: 280px; height: 36px; background: #1a1a2e; color: #fff; text-align: center;
+               line-height: 36px; border-radius: 6px 6px 0 0; font-size: 12px; letter-spacing: 3px; font-weight: 600; }
+
+  /* ── center section arc simulation ── */
+  #section-center .row { position: relative; }
+  #section-center .row[data-row-id="A"] { margin-left: 0px; margin-right: 0px; }
+  #section-center .row[data-row-id="B"] { margin-left: 2px; margin-right: 2px; }
+  #section-center .row[data-row-id="C"] { margin-left: 0px; margin-right: 0px; }
+  #section-center .row[data-row-id="D"] { margin-left: -4px; margin-right: -4px; }
+  #section-center .row[data-row-id="E"] { margin-left: -4px; margin-right: -4px; }
+  #section-center .row[data-row-id="F"] { margin-left: -6px; margin-right: -6px; }
+  #section-center .row[data-row-id="G"] { margin-left: -6px; margin-right: -6px; }
+  #section-center .row[data-row-id="H"] { margin-left: -8px; margin-right: -8px; }
+  #section-center .row[data-row-id="J"] { margin-left: -6px; margin-right: -6px; }
+  #section-center .row[data-row-id="K"] { margin-left: -6px; margin-right: -6px; }
+  #section-center .row[data-row-id="L"] { margin-left: 10px; margin-right: 10px; }
+
+  /* ── back of house labels ── */
+  .back-label { font-size: 10px; color: #aaa; letter-spacing: 2px; text-transform: uppercase; margin-top: 6px; }
+
+  /* ── legend ── */
+  #legend { display: flex; gap: 14px; margin-top: 16px; flex-wrap: wrap; justify-content: center; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #555; }
+  .legend-swatch { width: 14px; height: 14px; border-radius: 3px; border: 1px solid #ccc; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+  <!-- STAGE at top -->
+  <div class="stage-top-wrap">
+    <div class="stage-top">STAGE</div>
+  </div>
+
+  <!-- UPPER TIER: balconies + mezzanine -->
+  <div class="tier tier-upper">
+    <div class="cell cell-left"></div>
+    <div class="cell cell-center"></div>
+    <div class="cell cell-right"></div>
+  </div>
+
+  <!-- LOWER TIER: orchestra sections -->
+  <div class="tier tier-lower">
+
+    <!-- LEFT SECTION: rotated ~18deg clockwise to face stage -->
+    <div class="cell cell-left" style="transform: rotate(18deg); transform-origin: center bottom;">
+    <div class="section" id="section-left">
+      <div class="section-label">Left</div>
+
+      <div class="row" data-row-id="1">
+        <span class="row-label">1</span>
+        <div class="seats">
+          <button class="seat" data-row="1" data-seat="1" title="11">1</button>
+          <button class="seat" data-row="1" data-seat="2" title="12">2</button>
+          <button class="seat" data-row="1" data-seat="3" title="13">3</button>
+        </div>
+        <span class="row-label hidden">1</span>
+      </div>
+
+      <div class="row" data-row-id="2">
+        <span class="row-label">2</span>
+        <div class="seats">
+          <button class="seat" data-row="2" data-seat="1" title="21">1</button>
+          <button class="seat" data-row="2" data-seat="2" title="22">2</button>
+          <button class="seat" data-row="2" data-seat="3" title="23">3</button>
+          <button class="seat" data-row="2" data-seat="4" title="24">4</button>
+          <button class="seat" data-row="2" data-seat="5" title="25">5</button>
+          <button class="seat" data-row="2" data-seat="6" title="26">6</button>
+          <button class="seat" data-row="2" data-seat="7" title="27">7</button>
+        </div>
+        <span class="row-label hidden">2</span>
+      </div>
+
+      <div class="row" data-row-id="3">
+        <span class="row-label">3</span>
+        <div class="seats">
+          <button class="seat" data-row="3" data-seat="1" title="31">1</button>
+          <button class="seat" data-row="3" data-seat="2" title="32">2</button>
+          <button class="seat" data-row="3" data-seat="3" title="33">3</button>
+          <button class="seat" data-row="3" data-seat="4" title="34">4</button>
+          <button class="seat" data-row="3" data-seat="5" title="35">5</button>
+          <button class="seat" data-row="3" data-seat="6" title="36">6</button>
+          <button class="seat" data-row="3" data-seat="7" title="37">7</button>
+          <button class="seat" data-row="3" data-seat="8" title="38">8</button>
+        </div>
+        <span class="row-label hidden">3</span>
+      </div>
+
+      <div class="row" data-row-id="4">
+        <span class="row-label">4</span>
+        <div class="seats">
+          <button class="seat" data-row="4" data-seat="1" title="41">1</button>
+          <button class="seat" data-row="4" data-seat="2" title="42">2</button>
+          <button class="seat" data-row="4" data-seat="3" title="43">3</button>
+          <button class="seat" data-row="4" data-seat="4" title="44">4</button>
+          <button class="seat" data-row="4" data-seat="5" title="45">5</button>
+          <button class="seat" data-row="4" data-seat="6" title="46">6</button>
+          <button class="seat" data-row="4" data-seat="7" title="47">7</button>
+          <button class="seat" data-row="4" data-seat="8" title="48">8</button>
+        </div>
+        <span class="row-label hidden">4</span>
+      </div>
+
+      <div class="row" data-row-id="5">
+        <span class="row-label">5</span>
+        <div class="seats">
+          <button class="seat" data-row="5" data-seat="1" title="51">1</button>
+          <button class="seat" data-row="5" data-seat="2" title="52">2</button>
+          <button class="seat" data-row="5" data-seat="3" title="53">3</button>
+          <button class="seat" data-row="5" data-seat="4" title="54">4</button>
+          <button class="seat" data-row="5" data-seat="5" title="55">5</button>
+          <button class="seat" data-row="5" data-seat="6" title="56">6</button>
+          <button class="seat" data-row="5" data-seat="7" title="57">7</button>
+          <button class="seat" data-row="5" data-seat="8" title="58">8</button>
+        </div>
+        <span class="row-label hidden">5</span>
+      </div>
+
+      <div class="row" data-row-id="6">
+        <span class="row-label">6</span>
+        <div class="seats">
+          <button class="seat" data-row="6" data-seat="1" title="61">1</button>
+          <button class="seat" data-row="6" data-seat="2" title="62">2</button>
+          <button class="seat" data-row="6" data-seat="3" title="63">3</button>
+          <button class="seat" data-row="6" data-seat="4" title="64">4</button>
+          <button class="seat" data-row="6" data-seat="5" title="65">5</button>
+          <button class="seat" data-row="6" data-seat="6" title="66">6</button>
+          <button class="seat" data-row="6" data-seat="7" title="67">7</button>
+          <button class="seat" data-row="6" data-seat="8" title="68">8</button>
+          <button class="seat" data-row="6" data-seat="9" title="69">9</button>
+        </div>
+        <span class="row-label hidden">6</span>
+      </div>
+
+      <div class="row" data-row-id="7">
+        <span class="row-label">7</span>
+        <div class="seats">
+          <button class="seat" data-row="7" data-seat="1" title="71">1</button>
+          <button class="seat" data-row="7" data-seat="2" title="72">2</button>
+          <button class="seat" data-row="7" data-seat="3" title="73">3</button>
+          <button class="seat" data-row="7" data-seat="4" title="74">4</button>
+          <button class="seat" data-row="7" data-seat="5" title="75">5</button>
+          <button class="seat" data-row="7" data-seat="6" title="76">6</button>
+          <button class="seat" data-row="7" data-seat="7" title="77">7</button>
+          <button class="seat" data-row="7" data-seat="8" title="78">8</button>
+          <button class="seat" data-row="7" data-seat="9" title="79">9</button>
+        </div>
+        <span class="row-label hidden">7</span>
+      </div>
+
+      <div class="row" data-row-id="8">
+        <span class="row-label">8</span>
+        <div class="seats">
+          <button class="seat" data-row="8" data-seat="1" title="81">1</button>
+          <button class="seat" data-row="8" data-seat="2" title="82">2</button>
+          <button class="seat" data-row="8" data-seat="3" title="83">3</button>
+          <button class="seat" data-row="8" data-seat="4" title="84">4</button>
+          <button class="seat" data-row="8" data-seat="5" title="85">5</button>
+          <button class="seat" data-row="8" data-seat="6" title="86">6</button>
+          <button class="seat" data-row="8" data-seat="7" title="87">7</button>
+          <button class="seat" data-row="8" data-seat="8" title="88">8</button>
+          <button class="seat" data-row="8" data-seat="9" title="89">9</button>
+        </div>
+        <span class="row-label hidden">8</span>
+      </div>
+
+      <div class="row" data-row-id="9">
+        <span class="row-label">9</span>
+        <div class="seats">
+          <button class="seat" data-row="9" data-seat="1" title="91">1</button>
+          <button class="seat" data-row="9" data-seat="2" title="92">2</button>
+          <button class="seat" data-row="9" data-seat="3" title="93">3</button>
+          <button class="seat" data-row="9" data-seat="4" title="94">4</button>
+          <button class="seat" data-row="9" data-seat="5" title="95">5</button>
+          <button class="seat" data-row="9" data-seat="6" title="96">6</button>
+          <button class="seat" data-row="9" data-seat="7" title="97">7</button>
+          <button class="seat" data-row="9" data-seat="8" title="98">8</button>
+          <button class="seat" data-row="9" data-seat="9" title="99">9</button>
+        </div>
+        <span class="row-label hidden">9</span>
+      </div>
+
+      <div class="row" data-row-id="10">
+        <span class="row-label">10</span>
+        <div class="seats">
+          <button class="seat" data-row="10" data-seat="1" title="101">1</button>
+          <button class="seat" data-row="10" data-seat="2" title="102">2</button>
+          <button class="seat" data-row="10" data-seat="3" title="103">3</button>
+          <button class="seat" data-row="10" data-seat="4" title="104">4</button>
+          <button class="seat" data-row="10" data-seat="5" title="105">5</button>
+          <button class="seat" data-row="10" data-seat="6" title="106">6</button>
+          <button class="seat" data-row="10" data-seat="7" title="107">7</button>
+          <button class="seat" data-row="10" data-seat="8" title="108">8</button>
+          <button class="seat" data-row="10" data-seat="9" title="109">9</button>
+        </div>
+        <span class="row-label hidden">10</span>
+      </div>
+
+      <div class="row" data-row-id="11">
+        <span class="row-label">11</span>
+        <div class="seats">
+          <button class="seat" data-row="11" data-seat="1" title="111">1</button>
+          <button class="seat" data-row="11" data-seat="2" title="112">2</button>
+          <button class="seat" data-row="11" data-seat="3" title="113">3</button>
+          <button class="seat" data-row="11" data-seat="4" title="114">4</button>
+          <button class="seat" data-row="11" data-seat="5" title="115">5</button>
+          <button class="seat" data-row="11" data-seat="6" title="116">6</button>
+          <button class="seat" data-row="11" data-seat="7" title="117">7</button>
+          <button class="seat" data-row="11" data-seat="8" title="118">8</button>
+          <button class="seat" data-row="11" data-seat="9" title="119">9</button>
+        </div>
+        <span class="row-label hidden">11</span>
+      </div>
+
+      <div class="row" data-row-id="12">
+        <span class="row-label">12</span>
+        <div class="seats">
+          <button class="seat" data-row="12" data-seat="1" title="121">1</button>
+          <button class="seat" data-row="12" data-seat="2" title="122">2</button>
+          <button class="seat" data-row="12" data-seat="3" title="123">3</button>
+          <button class="seat" data-row="12" data-seat="4" title="124">4</button>
+          <button class="seat" data-row="12" data-seat="5" title="125">5</button>
+          <button class="seat" data-row="12" data-seat="6" title="126">6</button>
+          <button class="seat" data-row="12" data-seat="7" title="127">7</button>
+          <button class="seat" data-row="12" data-seat="8" title="128">8</button>
+        </div>
+        <span class="row-label hidden">12</span>
+      </div>
+
+      <div class="row" data-row-id="13">
+        <span class="row-label">13</span>
+        <div class="seats">
+          <button class="seat" data-row="13" data-seat="1" title="131">1</button>
+          <button class="seat" data-row="13" data-seat="2" title="132">2</button>
+          <button class="seat" data-row="13" data-seat="3" title="133">3</button>
+          <button class="seat" data-row="13" data-seat="4" title="134">4</button>
+          <button class="seat" data-row="13" data-seat="5" title="135">5</button>
+          <button class="seat" data-row="13" data-seat="6" title="136">6</button>
+          <button class="seat" data-row="13" data-seat="7" title="137">7</button>
+          <button class="seat" data-row="13" data-seat="8" title="138">8</button>
+        </div>
+        <span class="row-label hidden">13</span>
+      </div>
+
+    </div>
+    </div>
+
+    <!-- CENTER SECTION -->
+    <div class="cell cell-center">
+    <div class="section" id="section-center">
+      <div class="section-label">Center</div>
+
+      <div class="row" data-row-id="A">
+        <span class="row-label">A</span>
+        <div class="seats">
+          <button class="seat" data-row="A" data-seat="8" title="A8">8</button>
+          <button class="seat" data-row="A" data-seat="9" title="A9">9</button>
+          <button class="seat" data-row="A" data-seat="10" title="A10">10</button>
+          <button class="seat" data-row="A" data-seat="11" title="A11">11</button>
+          <button class="seat" data-row="A" data-seat="12" title="A12">12</button>
+          <button class="seat" data-row="A" data-seat="13" title="A13">13</button>
+          <button class="seat" data-row="A" data-seat="14" title="A14">14</button>
+          <button class="seat" data-row="A" data-seat="15" title="A15">15</button>
+        </div>
+        <span class="row-label">A</span>
+      </div>
+
+      <div class="row" data-row-id="B">
+        <span class="row-label">B</span>
+        <div class="seats">
+          <button class="seat" data-row="B" data-seat="9" title="B9">9</button>
+          <button class="seat" data-row="B" data-seat="10" title="B10">10</button>
+          <button class="seat" data-row="B" data-seat="11" title="B11">11</button>
+          <button class="seat" data-row="B" data-seat="12" title="B12">12</button>
+          <button class="seat" data-row="B" data-seat="13" title="B13">13</button>
+          <button class="seat" data-row="B" data-seat="14" title="B14">14</button>
+          <button class="seat" data-row="B" data-seat="15" title="B15">15</button>
+          <button class="seat" data-row="B" data-seat="16" title="B16">16</button>
+          <button class="seat" data-row="B" data-seat="17" title="B17">17</button>
+        </div>
+        <span class="row-label">B</span>
+      </div>
+
+      <div class="row" data-row-id="C">
+        <span class="row-label">C</span>
+        <div class="seats">
+          <button class="seat" data-row="C" data-seat="9" title="C9">9</button>
+          <button class="seat" data-row="C" data-seat="10" title="C10">10</button>
+          <button class="seat" data-row="C" data-seat="11" title="C11">11</button>
+          <button class="seat" data-row="C" data-seat="12" title="C12">12</button>
+          <button class="seat" data-row="C" data-seat="13" title="C13">13</button>
+          <button class="seat" data-row="C" data-seat="14" title="C14">14</button>
+          <button class="seat" data-row="C" data-seat="15" title="C15">15</button>
+          <button class="seat" data-row="C" data-seat="16" title="C16">16</button>
+          <button class="seat" data-row="C" data-seat="17" title="C17">17</button>
+          <button class="seat" data-row="C" data-seat="18" title="C18">18</button>
+        </div>
+        <span class="row-label">C</span>
+      </div>
+
+      <div class="row" data-row-id="D">
+        <span class="row-label">D</span>
+        <div class="seats">
+          <button class="seat" data-row="D" data-seat="10" title="D10">10</button>
+          <button class="seat" data-row="D" data-seat="11" title="D11">11</button>
+          <button class="seat" data-row="D" data-seat="12" title="D12">12</button>
+          <button class="seat" data-row="D" data-seat="13" title="D13">13</button>
+          <button class="seat" data-row="D" data-seat="14" title="D14">14</button>
+          <button class="seat" data-row="D" data-seat="15" title="D15">15</button>
+          <button class="seat" data-row="D" data-seat="16" title="D16">16</button>
+          <button class="seat" data-row="D" data-seat="17" title="D17">17</button>
+          <button class="seat" data-row="D" data-seat="18" title="D18">18</button>
+          <button class="seat" data-row="D" data-seat="19" title="D19">19</button>
+          <button class="seat" data-row="D" data-seat="20" title="D20">20</button>
+        </div>
+        <span class="row-label">D</span>
+      </div>
+
+      <div class="row" data-row-id="

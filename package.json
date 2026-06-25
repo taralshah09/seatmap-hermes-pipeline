@@ -1,0 +1,17 @@
+{
+  "name": "seatmap-hermes-agent",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "AI-powered seating chart image to interactive HTML converter",
+  "main": "hermes-agent.js",
+  "scripts": {
+    "start": "node hermes-agent.js",
+    "install-browsers": "npx playwright install chromium"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.53.0",
+    "dotenv": "^17.4.2",
+    "playwright": "^1.50.0",
+    "sharp": "^0.34.0"
+  }
+}

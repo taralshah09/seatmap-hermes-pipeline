@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Seatmap</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #f8fafc; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px 10px; }
+
+  /* ── overall layout ── */
+  .tier { display: grid; grid-template-columns: auto 60px auto; gap: 0px; width: 100%; max-width: 1400px; align-items: start; }
+  .tier-upper { margin-bottom: 12px; }
+  .tier-lower { margin-bottom: 16px; }
+
+  .cell { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .cell-left  { align-items: flex-end; }
+  .cell-right { align-items: flex-start; }
+  .cell-center { align-items: center; justify-content: flex-start; }
+
+  /* ── sections ── */
+  .section { display: flex; flex-direction: column; align-items: center; gap: 1px; margin-bottom: 6px; }
+  .section-label { font-size: 10px; font-weight: 700; color: #666; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
+
+  /* ── Q Manager divider ── */
+  .q-manager-divider {
+    display: flex; align-items: center; justify-content: center;
+    width: 100%; padding: 4px 8px; margin: 4px 0;
+    background: #fff3cd; border: 1px dashed #f0ad4e;
+    font-size: 9px; font-weight: 700; color: #856404;
+    letter-spacing: 0.04em; white-space: nowrap;
+  }
+
+  /* ── rows ── */
+  .row { display: flex; align-items: center; gap: 2px; }
+  .row-label { font-size: 9px; font-weight: 700; color: #999; width: 16px; text-align: center; flex-shrink: 0; }
+  .seats { display: flex; gap: 1px; flex-wrap: nowrap; }
+
+  /* ── seats ── */
+  .seat { width: 18px; height: 18px; border-radius: 3px; border: 1px solid #bcd;
+          background: #e8f4fd; font-size: 7px; cursor: pointer; color: #334;
+          display: flex; align-items: center; justify-content: center;
+          transition: background 0.12s; flex-shrink: 0; }
+  .seat:hover { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+  .seat.selected { background: #1d4ed8; color: #fff; border-color: #1d4ed8; }
+  .seat.wheelchair { background: #fef3c7; border-color: #f59e0b; }
+  .seat.companion  { background: #d1fae5; border-color: #10b981; }
+  .seat.restricted { background: #fee2e2; border-color: #ef4444; opacity: 0.55; cursor: not-allowed; }
+
+  /* ── stage ── */
+  .stage-wrap { width: 100%; max-width: 1400px; display: flex; justify-content: center; margin-bottom: 8px; }
+  .stage-wrap.stage-top { margin-bottom: 0; margin-top: 0; order: -1; }
+  .stage { width: 320px; height: 36px; background: #1a1a2e; color: #fff; text-align: center;
+           line-height: 36px; font-size: 12px; letter-spacing: 3px; font-weight: 600; }
+  .stage-wrap.stage-bottom .stage { border-radius: 6px 6px 0 0; }
+  .stage-wrap.stage-top    .stage { border-radius: 0 0 6px 6px; margin-bottom: 12px; }
+
+  /* ── center ramp ── */
+  .ramp-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    background: #c0392b;
+    min-height: 600px;
+    width: 60px;
+    padding: 8px 2px;
+    position: relative;
+  }
+  .ramp-label {
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    margin-top: 8px;
+  }
+  .ramp-size-label {
+    color: #ffd;
+    font-size: 8px;
+    font-weight: 600;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    margin-top: 6px;
+  }
+
+  /* ── section letter labels beside ramp ── */
+  .section-letters {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    margin-top: 2px;
+  }
+  .section-letter-badge {
+    font-size: 11px;
+    font-weight: 900;
+    color: #fff;
+    background: rgba(0,0,0,0.25);
+    border-radius: 3px;
+    padding: 1px 3px;
+    min-width: 20px;
+    text-align: center;
+  }
+
+  /* ── zone total label ── */
+  .zone-total {
+    font-size: 10px; font-weight: 700; color: #555;
+    text-align: center; margin-top: 4px; padding: 2px 6px;
+    background: #e2e8f0; border-radius: 4px;
+  }
+
+  /* ── legend ── */
+  #legend { display: flex; gap: 14px; margin-top: 16px; flex-wrap: wrap; justify-content: center; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #555; }
+  .legend-swatch { width: 14px; height: 14px; border-radius: 3px; border: 1px solid #ccc; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+  <!-- STAGE at the top, centered above D and E sections -->
+  <div class="stage-wrap stage-top">
+    <div class="stage">STAGE</div>
+  </div>
+
+  <!-- UPPER TIER: empty -->
+  <div class="tier tier-upper">
+    <div class="cell cell-left"></div>
+    <div class="cell cell-center"></div>
+    <div class="cell cell-right"></div>
+  </div>
+
+  <!-- LOWER TIER: Zone 1 (left) | Ramp (center) | Zone 2 (right) -->
+  <div class="tier tier-lower">
+
+    <!-- ═══════════════ ZONE 1 (left cell) ═══════════════ -->
+    <div class="cell cell-left">
+
+      <!-- Section D: Gold(24→19) | Platinum(18→13) | VIP(12→7) | VVIP(6→1), VVIP closest to ramp (rightmost) -->
+      <div class="section" id="section-zone1_D">
+        <div class="section-label">D</div>
+        <div class="row" data-row-id="row24">
+          <span class="row-label">24</span>
+          <div class="seats">
+            <button class="seat" data-row="row24" data-seat="24" title="D row24 Gold 24">24</button>
+            <button class="seat" data-row="row24" data-seat="23" title="D row24 Gold 23">23</button>
+            <button class="seat" data-row="row24" data-seat="22" title="D row24 Gold 22">22</button>
+            <button class="seat" data-row="row24" data-seat="21" title="D row24 Gold 21">21</button>
+            <button class="seat" data-row="row24" data-seat="20" title="D row24 Gold 20">20</button>
+            <button class="seat" data-row="row24" data-seat="19" title="D row24 Gold 19">19</button>
+            <button class="seat" data-row="row24" data-seat="18" title="D row24 Plat 18">18</button>
+            <button class="seat" data-row="row24" data-seat="17" title="D row24 Plat 17">17</button>
+            <button class="seat" data-row="row24" data-seat="16" title="D row24 Plat 16">16</button>
+            <button class="seat" data-row="row24" data-seat="15" title="D row24 Plat 15">15</button>
+            <button class="seat" data-row="row24" data-seat="14" title="D row24 Plat 14">14</button>
+            <button class="seat" data-row="row24" data-seat="13" title="D row24 Plat 13">13</button>
+            <button class="seat" data-row="row24" data-seat="12" title="D row24 VIP 12">12</button>
+            <button class="seat" data-row="row24" data-seat="11" title="D row24 VIP 11">11</button>
+            <button class="seat" data-row="row24" data-seat="10" title="D row24 VIP 10">10</button>
+            <button class="seat" data-row="row24" data-seat="9" title="D row24 VIP 9">9</button>
+            <button class="seat" data-row="row24" data-seat="8" title="D row24 VIP 8">8</button>
+            <button class="seat" data-row="row24" data-seat="7" title="D row24 VIP 7">7</button>
+            <button class="seat" data-row="row24" data-seat="6" title="D row24 VVIP 6">6</button>
+            <button class="seat" data-row="row24" data-seat="5" title="D row24 VVIP 5">5</button>
+            <button class="seat" data-row="row24" data-seat="4" title="D row24 VVIP 4">4</button>
+            <button class="seat" data-row="row24" data-seat="3" title="D row24 VVIP 3">3</button>
+            <button class="seat" data-row="row24" data-seat="2" title="D row24 VVIP 2">2</button>
+            <button class="seat" data-row="row24" data-seat="1" title="D row24 VVIP 1">1</button>
+          </div>
+          <span class="row-label">24</span>
+        </div>
+        <div class="row" data-row-id="row23">
+          <span class="row-label">23</span>
+          <div class="seats">
+            <button class="seat" data-row="row23" data-seat="24" title="D row23 Gold 24">24</button>
+            <button class="seat" data-row="row23" data-seat="23" title="D row23 Gold 23">23</button>
+            <button class="seat" data-row="row23" data-seat="22" title="D row23 Gold 22">22</button>
+            <button class="seat" data-row="row23" data-seat="21" title="D row23 Gold 21">21</button>
+            <button class="seat" data-row="row23" data-seat="20" title="D row23 Gold 20">20</button>
+            <button class="seat" data-row="row23" data-seat="19" title="D row23 Gold 19">19</button>
+            <button class="seat" data-row="row23" data-seat="18" title="D row23 Plat 18">18</button>
+            <button class="seat" data-row="row23" data-seat="17" title="D row23 Plat 17">17</button>
+            <button class="seat" data-row="row23" data-seat="16" title="D row23 Plat 16">16</button>
+            <button class="seat" data-row="row23" data-seat="15" title="D row23 Plat 15">15</button>
+            <button class="seat" data-row="row23" data-seat="14" title="D row23 Plat 14">14</button>
+            <button class="seat" data-row="row23" data-seat="13" title="D row23 Plat 13">13</button>
+            <button class="seat" data-row="row23" data-seat="12" title="D row23 VIP 12">12</button>
+            <button class="seat" data-row="row23" data-seat="11" title="D row23 VIP 11">11</button>
+            <button class="seat" data-row="row23" data-seat="10" title="D row23 VIP 10">10</button>
+            <button class="seat" data-row="row23" data-seat="9" title="D row23 VIP 9">9</button>
+            <button class="seat" data-row="row23" data-seat="8" title="D row23 VIP 8">8</button>
+            <button class="seat" data-row="row23" data-seat="7" title="D row23 VIP 7">7</button>
+            <button class="seat" data-row="row23" data-seat="6" title="D row23 VVIP 6">6</button>
+            <button class="seat" data-row="row23" data-seat="5" title="D row23 VVIP 5">5</button>
+            <button class="seat" data-row="row23" data-seat="4" title="D row23 VVIP 4">4</button>
+            <button class="seat" data-row="row23" data-seat="3" title="D row23 VVIP 3">3</button>
+            <button class="seat" data-row="row23" data-seat="2" title="D row23 VVIP 2">2</button>
+            <button class="seat" data-row="row23" data-seat="1" title="D row23 VVIP 1">1</button>
+          </div>
+          <span class="row-label">23</span>
+        </div>
+        <div class="row" data-row-id="row22">
+          <span class="row-label">22</span>
+          <div class="seats">
+            <button class="seat" data-row="row22" data-seat="24" title="D row22 Gold 24">24</button>
+            <button class="seat" data-row="row22" data-seat="23" title="D row22 Gold 23">23</button>
+            <button class="seat" data-row="row22" data-seat="22" title="D row22 Gold 22">22</button>
+            <button class="seat" data-row="row22" data-seat="21" title="D row22 Gold 21">21</button>
+            <button class="seat" data-row="row22" data-seat="20" title="D row22 Gold 20">20</button>
+            <button class="seat" data-row="row22" data-seat="19" title="D row22 Gold 19">19</button>
+            <button class="seat" data-row="row22" data-seat="18" title="D row22 Plat 18">18</button>
+            <button class="seat" data-row="row22" data-seat="17" title="D row22 Plat 17">17</button>
+            <button class="seat" data-row="row22" data-seat="16" title="D row22 Plat 16">16</button>
+            <button class="seat" data-row="row22" data-seat="15" title="D row22 Plat 15">15</button>
+            <button class="seat" data-row="row22" data-seat="14" title="D row22 Plat 14">14</button>
+            <button class="seat" data-row="row22" data-seat="13" title="D row22 Plat 13">13</button>
+            <button class="seat" data-row="row22" data-seat="12" title="D row22 VIP 12">12</button>
+            <button class="seat" data-row="row22" data-seat="11" title="D row22 VIP 11">11</button>
+            <button class="seat" data-row="row22" data-seat="10" title="D row22 VIP 10">10</button>
+            <button class="seat" data-row="row22" data-seat="9" title="D row22 VIP 9">9</button>
+            <button class="seat" data-row="row22" data-seat="8" title="D row22 VIP 8">8</button>
+            <button class="seat" data-row="row22" data-seat="7" title="D row22 VIP 7">7</button>
+            <button class="seat" data-row="row22" data-seat="6" title="D row22 VVIP 6">6</button>
+            <button class="seat" data-row="row22" data-seat="5" title="D row22 VVIP 5">5</button>
+            <button class="seat" data-row="row22" data-seat="4" title="D row22 VVIP 4">4</button>
+            <button class="seat" data-row="row22" data-seat="3" title="D row22 VVIP 3">3</button>
+            <button class="seat" data-row="row22" data-seat="2" title="D row22 VVIP 2">2</button>
+            <button class="seat" data-row="row22" data-seat="1" title="D row22 VVIP 1">1</button>
+          </div>
+          <span class="row-label">22</span>
+        </div>
+        <div class="row" data-row-id="row21">
+          <span class="row-label">21</span>
+          <div class="seats">
+            <button class="seat" data-row="row21" data-seat="24" title="D row21 Gold 24">24</button>
+            <button class="seat" data-row="row21" data-seat="23" title="D row21 Gold 23">23</button>
+            <button class="seat" data-row="row21" data-seat="22" title="D row21 Gold 22">22</button>
+            <button class="seat" data-row="row21" data-seat="21" title="D row21 Gold 21">21</button>
+            <button class="seat" data-row="row21" data-seat="20" title="D row21 Gold 20">20</button>
+            <button class="seat" data-row="row21" data-seat="19" title="D row21 Gold 19">19</button>
+            <button class="seat" data-row="row21" data-seat="18" title="D row21 Plat 18">18</button>
+            <button class="seat" data-row="row21" data-seat="17" title="D row21 Plat 17">17</button>
+            <button class="seat" data-row="row21" data-seat="16" title="D row21 Plat 16">16</button>
+            <button class="seat" data-row="row21" data-seat="15" title="D row21 Plat 15">15</button>
+            <button class="seat" data-row="row21" data-seat="14" title="D row21 Plat 14">14</button>
+            <button class="seat" data-row="row21" data-seat="13" title="D row21 Plat 13">13</button>
+            <button class="seat" data-row="row21" data-seat="12" title="D row21 VIP 12">12</button>
+            <button class="seat" data-row="row21" data-seat="11" title="D row21 VIP 11">11</button>
+            <button class="seat" data-row="row21" data-seat="10" title="D row21 VIP 10">10</button>
+            <button class="seat" data-row="row21" data-seat="9" title="D row21 VIP 9">9</button>
+            <button class="seat" data-row="row21" data-seat="8" title="D row21 VIP 8">8</button>
+            <button class="seat" data-row="row21" data-seat="7" title="D row21 VIP 7">7</button>
+            <button class="seat" data-row="row21" data-seat="6" title="D row21 VVIP 6">6</button>
+            <button class="seat" data-row="row21" data-seat="5" title="D row21 VVIP 5">5</button>
+            <button class="seat" data-row="row21" data-seat="4" title="D row21 VVIP 4">4</button>
+            <button class="seat" data-row="row21" data-seat="3" title="D row21 VVIP 3">3</button>
+            <button class="seat" data-row="row21" data-seat="2" title="D row21 VVIP 2">2</button>
+            <button class="seat" data-row="row21" data-seat="1" title="D row21 VVIP 1">1</button>
+          </div>
+          <span class="row-label">21</span>
+        </div>
+        <div class="row" data-row-id="row20">
+          <span class="row-label">20</span>
+          <div class="seats">
+            <button class="seat" data-row="row20" data-seat="24" title="D row20 Gold 24">24</button>
+            <button class="seat" data-row="row20" data-seat="23" title="D row20 Gold 23">23</button>
+            <button class="seat" data-row="row20" data-seat="22" title="D row20 Gold 22">22</button>
+            <button class="seat" data-row="row20" data-seat="21" title="D row20 Gold 21">21</button>
+            <button class="seat" data-row="row20" data-seat="20" title="D row20 Gold 20">20</button>
+            <button class="seat" data-row="row20" data-seat="19" title="D row20 Gold 19">19</button>
+            <button class="seat" data-row="row20" data-seat="18" title="D row20 Plat 18">18</button>
+            <button class="seat" data-row="row20" data-seat="17" title="D row20 Plat 17">17</button>
+            <button class="seat" data-row="row20" data-seat="16" title="D row20 Plat 16">16</button>
+            <button class="seat" data-row="row20" data-seat="15" title="D row20 Plat 15">15</button>
+            <button class="seat" data-row="row20" data-seat="14" title="D row20 Plat 14">14</button>
+            <button class="seat" data-row="row20" data-seat="13" title="D row20 Plat 13">13</button>
+            <button class="seat" data-row="row20" data-seat="12" title="D row20 VIP 12">12</button>
+            <button class="seat" data-row="row20" data-seat="11" title="D row20 VIP 11">11</button>
+            <button class="seat" data-row="row20" data-seat="10" title="D row20 VIP 10">10</button>
+            <button class="seat" data-row="row20" data-seat="9" title="D row20 VIP 9">9</button>
+            <button class="seat" data-row="row20" data-seat="8" title="D row20 VIP 8">8</button>
+            <button class="seat" data-row="row20" data-seat="7" title="D row20 VIP 7">7</button>
+            <button class="seat" data-row="row20" data-seat="6" title="D row20 VVIP 6">6</button>
+            <button class="seat" data-row="row20" data-seat="5" title="D row20 VVIP 5">5</button>
+            <button class="seat" data-row="row20" data-seat="4" title="D row20 VVIP 4">4</button>
+            <button class="seat" data-row="row20" data-seat="3" title="D row20 VVIP 3">3</button>
+            <button class="seat" data-row="row20" data-seat="2" title="D row20 VVIP 2">2</button>
+            <button class="seat" data-row="row20" data-seat="1" title="D row20 VVIP 1">1</button>
+          </div>
+          <span class="row-label">20</span>
+        </div>
+        <div class="row" data-row-id="row19">
+          <span class="row-label">19</span>
+          <div class="seats">
+            <button class="seat" data-row="row19" data-seat="24" title="D row19 Gold 24">24</button>
+            <button class="seat" data-row="row19" data-seat="23" title="D row19 Gold 23">23</button>
+            <button class="seat" data-row="row19" data-seat="22" title="D row19 Gold 22">22</button>
+            <button class="seat" data-row="row19" data-seat="21" title="D row19 Gold 21">21</button>
+            <button class="seat" data-row="row19" data-seat="20" title="D row19 Gold 20">20</button>
+            <button class="seat" data-row="row19" data-seat="19" title="D row19 Gold 19">19</button>
+            <button class="seat" data-row="row19" data-seat="18" title="D row19 Plat 18">18</button>
+            <button class="seat" data-row="row19" data-seat="17" title="D row19 Plat 17">17</button>
+            <button class="seat" data-row="row19" data-seat="16" title="D row19 Plat 16">16</button>
+            <button class="seat" data-row="row19" data-seat="15" title="D row19 Plat 15">15</button>
+            <button class="seat" data-row="row19" data-seat="14" title="D row19 Plat 14">14</button>
+            <button class="seat" data-row="row19" data-seat="13" title="D row19 Plat 13">13</button>
+            <button class="seat" data-row="row19" data-seat="12" title="D row19 VIP 12">12</button>
+            <button class="seat" data-row="row19" data-seat="11" title="D row19 VIP 11">11</button>
+            <button class="seat" data-row="row19" data-seat="10" title="D row19 VIP 10">10</button>
+            <button class="seat" data-row="row19" data-seat="9" title="D row19 VIP 9">9</button>
+            <button class="seat" data-row="row19" data-seat="8" title="D row19 VIP 8">8</button>
+            <button class="seat" data-row="row19" data-seat="7" title="D row19 VIP 7">7</button>
+            <button class="seat" data-row="row19" data-seat="6" title="D row19 VVIP 6">6</button>
+            <button class="seat" data-row="row19" data-seat="5" title="D row19 VVIP 5">5</button>
+            <button class="seat" data-row="row19" data-seat="4" title="D row19 VVIP 4">4</button>
+            <button class="seat" data-row="row19" data-seat="3" title="D row19 VVIP 3">3</button>
+            <button class="seat" data-row="row19" data-seat="2" title="D row19 VVIP 2">2</button>
+            <button class="seat" data-row="row19" data-seat="1" title="D row19 VVIP 1">1</button>
+          </div>
+          <span class="row-label">19</span>
+        </div>
+      </div>
+
+      <!-- Q Manager Zone 1 divider BETWEEN D and C -->
+      <div class="q-manager-divider">Q MANAGER — ZONE 1</div>
+
+      <!-- Section C: rows 31-40, Gold(40→31) | Platinum(30→21) | VIP(20→11) | VVIP(10→1), VVIP rightmost -->
+      <div class="section" id="section-zone1_C">
+        <div class="section-label">C</div>
+        <div class="row" data-row-id="row40">
+          <span class="row-label">40</span>
+          <div class="seats">
+            <button class="seat" data-row="row40" data-seat="40" title="C row40 Gold 40">40</button>
+            <button class="seat" data-row="row40" data-seat="39" title="C row40 Gold 39">39</button>
+            <button class="seat" data-row="row40" data-seat="38" title="C row40 Gold 38">38</button>
+            <button class="seat" data-row="row40" data-seat="37" title="C row40 Gold

@@ -1,0 +1,1223 @@
+{
+  "venue": {
+    "totalSections": 10,
+    "layout": "rectangular",
+    "stagePosition": "top"
+  },
+  "sections": [
+    {
+      "id": "zone1_D",
+      "label": "D",
+      "angle": -15,
+      "tiers": [
+        "Gold",
+        "Platinum",
+        "VIP",
+        "VVIP"
+      ],
+      "rows": [
+        {
+          "rowId": "row24",
+          "seats": [
+            24,
+            18,
+            12,
+            6
+          ],
+          "tiers": [
+            "Gold",
+            "Platinum",
+            "VIP",
+            "VVIP"
+          ]
+        },
+        {
+          "rowId": "row23",
+          "seats": [
+            23,
+            17,
+            11,
+            5
+          ],
+          "tiers": [
+            "Gold",
+            "Platinum",
+            "VIP",
+            "VVIP"
+          ]
+        },
+        {
+          "rowId": "row22",
+          "seats": [
+            22,
+            16,
+            10,
+            4
+          ],
+          "tiers": [
+            "Gold",
+            "Platinum",
+            "VIP",
+            "VVIP"
+          ]
+        },
+        {
+          "rowId": "row21",
+          "seats": [
+            21,
+            15,
+            9,
+            3
+          ],
+          "tiers": [
+            "Gold",
+            "Platinum",
+            "VIP",
+            "VVIP"
+          ]
+        },
+        {
+          "rowId": "row20",
+          "seats": [
+            20,
+            14,
+            8,
+            2
+          ],
+          "tiers": [
+            "Gold",
+            "Platinum",
+            "VIP",
+            "VVIP"
+          ]
+        },
+        {
+          "rowId": "row19",
+          "seats": [
+            19,
+            13,
+            7,
+            1
+          ],
+          "tiers": [
+            "Gold",
+            "Platinum",
+            "VIP",
+            "VVIP"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "zone2_E",
+      "label": "E",
+      "angle": 15,
+      "tiers": [
+        "VVIP",
+        "VIP",
+        "Platinum",
+        "Gold"
+      ],
+      "rows": [
+        {
+          "rowId": "row24",
+          "seats": [
+            6,
+            12,
+            18,
+            24
+          ],
+          "tiers": [
+            "VVIP",
+            "VIP",
+            "Platinum",
+            "Gold"
+          ]
+        },
+        {
+          "rowId": "row23",
+          "seats": [
+            5,
+            11,
+            17,
+            23
+          ],
+          "tiers": [
+            "VVIP",
+            "VIP",
+            "Platinum",
+            "Gold"
+          ]
+        },
+        {
+          "rowId": "row22",
+          "seats": [
+            4,
+            10,
+            16,
+            22
+          ],
+          "tiers": [
+            "VVIP",
+            "VIP",
+            "Platinum",
+            "Gold"
+          ]
+        },
+        {
+          "rowId": "row21",
+          "seats": [
+            3,
+            9,
+            15,
+            21
+          ],
+          "tiers": [
+            "VVIP",
+            "VIP",
+            "Platinum",
+            "Gold"
+          ]
+        },
+        {
+          "rowId": "row20",
+          "seats": [
+            2,
+            8,
+            14,
+            20
+          ],
+          "tiers": [
+            "VVIP",
+            "VIP",
+            "Platinum",
+            "Gold"
+          ]
+        },
+        {
+          "rowId": "row19",
+          "seats": [
+            1,
+            7,
+            13,
+            19
+          ],
+          "tiers": [
+            "VVIP",
+            "VIP",
+            "Platinum",
+            "Gold"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "zone1_C",
+      "label": "C",
+      "angle": -15,
+      "tiers": [
+        "Gold",
+        "Platinum",
+        "VIP",
+        "VVIP"
+      ],
+      "rows": [
+        {
+          "rowId": "row40",
+          "seats": [
+            40,
+            30,
+            20,
+            10
+          ],
+          "tiers": [
+            "Gold",
+            "Platinum",
+            "VIP",
+            "VVIP"
+          ]
+        },
+        {
+          "rowId": "row39",
+          "seats": [
+            39,
+            29,
+            19,
+            9
+          ],
+          "tiers": [
+            "Gold",
+            "Platinum",
+            "VIP",
+            "VVIP"
+          ]
+        },
+        {
+          "rowId": "row38",
+          "seats": [
+            38,
+            28,
+            18,
+            8
+          ],
+          "tiers": [
+            "Gold",
+            "Platinum",
+            "VIP",
+            "VVIP"
+          ]
+        },
+        {
+          "rowId": "row37",
+          "seats": [
+            37,
+            27,
+            17,
+            7
+          ],
+          "tiers": [
+            "Gold",
+            "Platinum",
+            "VIP",
+            "VVIP"
+          ]
+        },
+        {
+          "rowId": "row36",
+          "seats": [
+            36,
+            26,
+            16,
+            6
+          ],
+          "tiers": [
+            "Gold",
+            "Platinum",
+            "VIP",
+            "VVIP"
+          ]
+        },
+        {
+          "rowId": "row35",
+          "seats": [
+            35,
+            25,
+            15,
+            5
+          ],
+          "tiers": [
+            "Gold",
+            "Platinum",
+            "VIP",
+            "VVIP"
+          ]
+        },
+        {
+          "rowId": "row34",
+          "seats": [
+            34,
+            24,
+            14,
+            4
+          ],
+          "tiers": [
+            "Gold",
+            "Platinum",
+            "VIP",
+            "VVIP"
+          ]
+        },
+        {
+          "rowId": "row33",
+          "seats": [
+            33,
+            23,
+            13,
+            3
+          ],
+          "tiers": [
+            "Gold",
+            "Platinum",
+            "VIP",
+            "VVIP"
+          ]
+        },
+        {
+          "rowId": "row32",
+          "seats": [
+            32,
+            22,
+            12,
+            2
+          ],
+          "tiers": [
+            "Gold",
+            "Platinum",
+            "VIP",
+            "VVIP"
+          ]
+        },
+        {
+          "rowId": "row31",
+          "seats": [
+            31,
+            21,
+            11,
+            1
+          ],
+          "tiers": [
+            "Gold",
+            "Platinum",
+            "VIP",
+            "VVIP"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "zone2_F",
+      "label": "F",
+      "angle": 15,
+      "tiers": [
+        "VVIP",
+        "VIP",
+        "Platinum",
+        "Gold"
+      ],
+      "rows": [
+        {
+          "rowId": "row40",
+          "seats": [
+            10,
+            20,
+            30,
+            40
+          ],
+          "tiers": [
+            "VVIP",
+            "VIP",
+            "Platinum",
+            "Gold"
+          ]
+        },
+        {
+          "rowId": "row39",
+          "seats": [
+            9,
+            19,
+            29,
+            39
+          ],
+          "tiers": [
+            "VVIP",
+            "VIP",
+            "Platinum",
+            "Gold"
+          ]
+        },
+        {
+          "rowId": "row38",
+          "seats": [
+            8,
+            18,
+            28,
+            38
+          ],
+          "tiers": [
+            "VVIP",
+            "VIP",
+            "Platinum",
+            "Gold"
+          ]
+        },
+        {
+          "rowId": "row37",
+          "seats": [
+            7,
+            17,
+            27,
+            37
+          ],
+          "tiers": [
+            "VVIP",
+            "VIP",
+            "Platinum",
+            "Gold"
+          ]
+        },
+        {
+          "rowId": "row36",
+          "seats": [
+            6,
+            16,
+            26,
+            36
+          ],
+          "tiers": [
+            "VVIP",
+            "VIP",
+            "Platinum",
+            "Gold"
+          ]
+        },
+        {
+          "rowId": "row35",
+          "seats": [
+            5,
+            15,
+            25,
+            35
+          ],
+          "tiers": [
+            "VVIP",
+            "VIP",
+            "Platinum",
+            "Gold"
+          ]
+        },
+        {
+          "rowId": "row34",
+          "seats": [
+            4,
+            14,
+            24,
+            34
+          ],
+          "tiers": [
+            "VVIP",
+            "VIP",
+            "Platinum",
+            "Gold"
+          ]
+        },
+        {
+          "rowId": "row33",
+          "seats": [
+            3,
+            13,
+            23,
+            33
+          ],
+          "tiers": [
+            "VVIP",
+            "VIP",
+            "Platinum",
+            "Gold"
+          ]
+        },
+        {
+          "rowId": "row32",
+          "seats": [
+            2,
+            12,
+            22,
+            32
+          ],
+          "tiers": [
+            "VVIP",
+            "VIP",
+            "Platinum",
+            "Gold"
+          ]
+        },
+        {
+          "rowId": "row31",
+          "seats": [
+            1,
+            11,
+            21,
+            31
+          ],
+          "tiers": [
+            "VVIP",
+            "VIP",
+            "Platinum",
+            "Gold"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "zone1_B",
+      "label": "B",
+      "angle": -15,
+      "tiers": [
+        "Gold",
+        "Platinum",
+        "VIP",
+        "VVIP"
+      ],
+      "rows": [
+        {
+          "rowId": "row40",
+          "seats": [
+            40,
+            30,
+            20,
+            10
+          ],
+          "tiers": [
+            "Gold",
+            "Platinum",
+            "VIP",
+            "VVIP"
+          ]
+        },
+        {
+          "rowId": "row39",
+          "seats": [
+            39,
+            29,
+            19,
+            9
+          ],
+          "tiers": [
+            "Gold",
+            "Platinum",
+            "VIP",
+            "VVIP"
+          ]
+        },
+        {
+          "rowId": "row38",
+          "seats": [
+            38,
+            28,
+            18,
+            8
+          ],
+          "tiers": [
+            "Gold",
+            "Platinum",
+            "VIP",
+            "VVIP"
+          ]
+        },
+        {
+          "rowId": "row37",
+          "seats": [
+            37,
+            27,
+            17,
+            7
+          ],
+          "tiers": [
+            "Gold",
+            "Platinum",
+            "VIP",
+            "VVIP"
+          ]
+        },
+        {
+          "rowId": "row36",
+          "seats": [
+            36,
+            26,
+            16,
+            6
+          ],
+          "tiers": [
+            "Gold",
+            "Platinum",
+            "VIP",
+            "VVIP"
+          ]
+        },
+        {
+          "rowId": "row35",
+          "seats": [
+            35,
+            25,
+            15,
+            5
+          ],
+          "tiers": [
+            "Gold",
+            "Platinum",
+            "VIP",
+            "VVIP"
+          ]
+        },
+        {
+          "rowId": "row34",
+          "seats": [
+            34,
+            24,
+            14,
+            4
+          ],
+          "tiers": [
+            "Gold",
+            "Platinum",
+            "VIP",
+            "VVIP"
+          ]
+        },
+        {
+          "rowId": "row33",
+          "seats": [
+            33,
+            23,
+            13,
+            3
+          ],
+          "tiers": [
+            "Gold",
+            "Platinum",
+            "VIP",
+            "VVIP"
+          ]
+        },
+        {
+          "rowId": "row32",
+          "seats": [
+            32,
+            22,
+            12,
+            2
+          ],
+          "tiers": [
+            "Gold",
+            "Platinum",
+            "VIP",
+            "VVIP"
+          ]
+        },
+        {
+          "rowId": "row31",
+          "seats": [
+            31,
+            21,
+            11,
+            1
+          ],
+          "tiers": [
+            "Gold",
+            "Platinum",
+            "VIP",
+            "VVIP"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "zone2_G",
+      "label": "G",
+      "angle": 15,
+      "tiers": [
+        "VVIP",
+        "VIP",
+        "Platinum",
+        "Gold"
+      ],
+      "rows": [
+        {
+          "rowId": "row40",
+          "seats": [
+            10,
+            20,
+            30,
+            40
+          ],
+          "tiers": [
+            "VVIP",
+            "VIP",
+            "Platinum",
+            "Gold"
+          ]
+        },
+        {
+          "rowId": "row39",
+          "seats": [
+            9,
+            19,
+            29,
+            39
+          ],
+          "tiers": [
+            "VVIP",
+            "VIP",
+            "Platinum",
+            "Gold"
+          ]
+        },
+        {
+          "rowId": "row38",
+          "seats": [
+            8,
+            18,
+            28,
+            38
+          ],
+          "tiers": [
+            "VVIP",
+            "VIP",
+            "Platinum",
+            "Gold"
+          ]
+        },
+        {
+          "rowId": "row37",
+          "seats": [
+            7,
+            17,
+            27,
+            37
+          ],
+          "tiers": [
+            "VVIP",
+            "VIP",
+            "Platinum",
+            "Gold"
+          ]
+        },
+        {
+          "rowId": "row36",
+          "seats": [
+            6,
+            16,
+            26,
+            36
+          ],
+          "tiers": [
+            "VVIP",
+            "VIP",
+            "Platinum",
+            "Gold"
+          ]
+        },
+        {
+          "rowId": "row35",
+          "seats": [
+            5,
+            15,
+            25,
+            35
+          ],
+          "tiers": [
+            "VVIP",
+            "VIP",
+            "Platinum",
+            "Gold"
+          ]
+        },
+        {
+          "rowId": "row34",
+          "seats": [
+            4,
+            14,
+            24,
+            34
+          ],
+          "tiers": [
+            "VVIP",
+            "VIP",
+            "Platinum",
+            "Gold"
+          ]
+        },
+        {
+          "rowId": "row33",
+          "seats": [
+            3,
+            13,
+            23,
+            33
+          ],
+          "tiers": [
+            "VVIP",
+            "VIP",
+            "Platinum",
+            "Gold"
+          ]
+        },
+        {
+          "rowId": "row32",
+          "seats": [
+            2,
+            12,
+            22,
+            32
+          ],
+          "tiers": [
+            "VVIP",
+            "VIP",
+            "Platinum",
+            "Gold"
+          ]
+        },
+        {
+          "rowId": "row31",
+          "seats": [
+            1,
+            11,
+            21,
+            31
+          ],
+          "tiers": [
+            "VVIP",
+            "VIP",
+            "Platinum",
+            "Gold"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "zone1_A",
+      "label": "A",
+      "angle": -15,
+      "tiers": [
+        "Gold",
+        "Platinum",
+        "VIP",
+        "VVIP"
+      ],
+      "rows": [
+        {
+          "rowId": "row40",
+          "seats": [
+            40,
+            30,
+            20,
+            10
+          ],
+          "tiers": [
+            "Gold",
+            "Platinum",
+            "VIP",
+            "VVIP"
+          ]
+        },
+        {
+          "rowId": "row39",
+          "seats": [
+            39,
+            29,
+            19,
+            9
+          ],
+          "tiers": [
+            "Gold",
+            "Platinum",
+            "VIP",
+            "VVIP"
+          ]
+        },
+        {
+          "rowId": "row38",
+          "seats": [
+            38,
+            28,
+            18,
+            8
+          ],
+          "tiers": [
+            "Gold",
+            "Platinum",
+            "VIP",
+            "VVIP"
+          ]
+        },
+        {
+          "rowId": "row37",
+          "seats": [
+            37,
+            27,
+            17,
+            7
+          ],
+          "tiers": [
+            "Gold",
+            "Platinum",
+            "VIP",
+            "VVIP"
+          ]
+        },
+        {
+          "rowId": "row36",
+          "seats": [
+            36,
+            26,
+            16,
+            6
+          ],
+          "tiers": [
+            "Gold",
+            "Platinum",
+            "VIP",
+            "VVIP"
+          ]
+        },
+        {
+          "rowId": "row35",
+          "seats": [
+            35,
+            25,
+            15,
+            5
+          ],
+          "tiers": [
+            "Gold",
+            "Platinum",
+            "VIP",
+            "VVIP"
+          ]
+        },
+        {
+          "rowId": "row34",
+          "seats": [
+            34,
+            24,
+            14,
+            4
+          ],
+          "tiers": [
+            "Gold",
+            "Platinum",
+            "VIP",
+            "VVIP"
+          ]
+        },
+        {
+          "rowId": "row33",
+          "seats": [
+            33,
+            23,
+            13,
+            3
+          ],
+          "tiers": [
+            "Gold",
+            "Platinum",
+            "VIP",
+            "VVIP"
+          ]
+        },
+        {
+          "rowId": "row32",
+          "seats": [
+            32,
+            22,
+            12,
+            2
+          ],
+          "tiers": [
+            "Gold",
+            "Platinum",
+            "VIP",
+            "VVIP"
+          ]
+        },
+        {
+          "rowId": "row31",
+          "seats": [
+            31,
+            21,
+            11,
+            1
+          ],
+          "tiers": [
+            "Gold",
+            "Platinum",
+            "VIP",
+            "VVIP"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "zone2_H",
+      "label": "H",
+      "angle": 15,
+      "tiers": [
+        "VVIP",
+        "VIP",
+        "Platinum",
+        "Gold"
+      ],
+      "rows": [
+        {
+          "rowId": "row40",
+          "seats": [
+            10,
+            20,
+            30,
+            40
+          ],
+          "tiers": [
+            "VVIP",
+            "VIP",
+            "Platinum",
+            "Gold"
+          ]
+        },
+        {
+          "rowId": "row39",
+          "seats": [
+            9,
+            19,
+            29,
+            39
+          ],
+          "tiers": [
+            "VVIP",
+            "VIP",
+            "Platinum",
+            "Gold"
+          ]
+        },
+        {
+          "rowId": "row38",
+          "seats": [
+            8,
+            18,
+            28,
+            38
+          ],
+          "tiers": [
+            "VVIP",
+            "VIP",
+            "Platinum",
+            "Gold"
+          ]
+        },
+        {
+          "rowId": "row37",
+          "seats": [
+            7,
+            17,
+            27,
+            37
+          ],
+          "tiers": [
+            "VVIP",
+            "VIP",
+            "Platinum",
+            "Gold"
+          ]
+        },
+        {
+          "rowId": "row36",
+          "seats": [
+            6,
+            16,
+            26,
+            36
+          ],
+          "tiers": [
+            "VVIP",
+            "VIP",
+            "Platinum",
+            "Gold"
+          ]
+        },
+        {
+          "rowId": "row35",
+          "seats": [
+            5,
+            15,
+            25,
+            35
+          ],
+          "tiers": [
+            "VVIP",
+            "VIP",
+            "Platinum",
+            "Gold"
+          ]
+        },
+        {
+          "rowId": "row34",
+          "seats": [
+            4,
+            14,
+            24,
+            34
+          ],
+          "tiers": [
+            "VVIP",
+            "VIP",
+            "Platinum",
+            "Gold"
+          ]
+        },
+        {
+          "rowId": "row33",
+          "seats": [
+            3,
+            13,
+            23,
+            33
+          ],
+          "tiers": [
+            "VVIP",
+            "VIP",
+            "Platinum",
+            "Gold"
+          ]
+        },
+        {
+          "rowId": "row32",
+          "seats": [
+            2,
+            12,
+            22,
+            32
+          ],
+          "tiers": [
+            "VVIP",
+            "VIP",
+            "Platinum",
+            "Gold"
+          ]
+        },
+        {
+          "rowId": "row31",
+          "seats": [
+            1,
+            11,
+            21,
+            31
+          ],
+          "tiers": [
+            "VVIP",
+            "VIP",
+            "Platinum",
+            "Gold"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "zone1_qmanager",
+      "label": "Q Manager Zone 1",
+      "angle": -15,
+      "note": "Manager/operator queue area between sections D and C",
+      "rows": []
+    },
+    {
+      "id": "zone2_qmanager",
+      "label": "Q Manager Zone 2",
+      "angle": 15,
+      "note": "Manager/operator queue area between sections E and F",
+      "rows": []
+    }
+  ],
+  "ramp": {
+    "label": "Ramp",
+    "dimensions": "12 ft x 60 ft",
+    "position": "center"
+  },
+  "capacity": {
+    "zone1_totalChairs": 144,
+    "zone2_totalChairs": 144,
+    "totalChairs": 288
+  },
+  "tierColorCoding": {
+    "VVIP": "yellow",
+    "VIP": "white",
+    "Platinum": "white",
+    "Gold": "yellow"
+  }
+}
