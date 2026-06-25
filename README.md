@@ -33,29 +33,9 @@ The agent runs a **5-stage pipeline**, with two self-correcting feedback loops
 (a visual-accuracy loop and a spatial-orientation loop) that use Claude Vision to
 compare renders against the original image and iteratively fix discrepancies.
 
-<!-- HLD DIAGRAM GOES HERE -->
+<img width="663" height="688" alt="image" src="https://github.com/user-attachments/assets/73a72e12-19dd-4a4d-8008-f3b9c27c1a29" />
 
-```
-Input (PNG / PDF)
-   │
-   ▼
-[1] Preprocess     PDF→PNG, normalize to 2400px-wide PNG
-   │
-   ▼
-[2] Extract        Claude Vision: image → structured layout JSON
-   │
-   ▼
-[3] Render         layout JSON → initial interactive HTML
-   │
-   ▼
-[4] Visual loop    screenshot → Claude diff vs original → patch HTML → repeat
-   │
-   ▼
-[5] Orient         reposition sections into true 2D layout + inject editor
-   │
-   ▼
-Output: seatmap-oriented.html  (interactive + editable)
-```
+--- 
 
 **Stage breakdown**
 
