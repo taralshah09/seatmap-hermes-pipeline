@@ -3,6 +3,12 @@ import { chromium } from 'playwright';
 import Anthropic from '@anthropic-ai/sdk';
 import fs from 'fs';
 import path from 'path';
+import { pathToFileURL } from 'url';
+
+// True only when this file is run directly (node orient.js ...), not when it's
+// imported by hermes-agent.js — otherwise the CLI block below would grab
+// hermes-agent's own argv (e.g. the run-count) and fire on import.
+const isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
 
 const client = new Anthropic();
 
@@ -148,11 +154,17 @@ export function injectEditor(html) {
 #editor-bar button.ghost{background:#fff;color:#1f6feb;}
 #editor-bar button.danger{background:#ef4444;border-color:#ef4444;}
 #editor-bar button:disabled{opacity:.45;cursor:not-allowed;}
-#editor-bar .hint{color:#666;max-width:320px;}
+#editor-bar .hint{color:#666;max-width:340px;}
 .map [data-sec]{cursor:move;}
 .map [data-sec].dragging{outline:2px dashed #1f6feb;outline-offset:3px;opacity:.92;}
+.map [data-sec].selected{outline:2px solid #1f6feb;outline-offset:3px;}
 body.dragging-active{user-select:none;}
+#rot-handle{position:absolute;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;background:#fff;border:2px solid #1f6feb;cursor:grab;z-index:60;display:none;box-shadow:0 1px 3px rgba(0,0,0,.35);}
+#rot-handle::after{content:'';position:absolute;left:50%;top:100%;width:2px;height:16px;background:#1f6feb;transform:translateX(-50%);}
+#rot-handle.turning{cursor:grabbing;}
+body.delete-mode #rot-handle{display:none !important;}
 body.delete-mode .map [data-sec]{cursor:default;}
+body.delete-mode .map [data-sec].selected{outline:none;}
 body.delete-mode .map .seat,body.delete-mode .map .rl,body.delete-mode .map .sl{cursor:pointer;}
 .map .seat.to-delete{background:#ef4444 !important;border-color:#b91c1c !important;color:#fff !important;opacity:1 !important;}
 </style>`;
@@ -163,17 +175,59 @@ body.delete-mode .map .seat,body.delete-mode .map .rl,body.delete-mode .map .sl{
   var map=document.querySelector('.map'); if(!map) return;
   var mode='arrange';
   var active=null,gx=0,gy=0,moved=false,suppress=false;
+  var selected=null,rotating=false,rcx=0,rcy=0,startAng=0,startRot=0;
   function center(el){var r=el.getBoundingClientRect(),m=map.getBoundingClientRect();return {x:r.left+r.width/2-m.left,y:r.top+r.height/2-m.top};}
-  function scaleOf(el){try{return (new DOMMatrixReadOnly(getComputedStyle(el).transform)).a||1;}catch(e){return 1;}}
+  // Split a computed transform into its scale and rotation (deg). Survives a
+  // reload where the baked transform is "...rotate(r) scale(s)" — reading .a
+  // alone would mistake scale*cos(r) for the scale.
+  function decompose(el){
+    var t=getComputedStyle(el).transform; if(!t||t==='none') return {scale:1,rot:0};
+    try{var mm=new DOMMatrixReadOnly(t);var s=Math.sqrt(mm.a*mm.a+mm.b*mm.b)||1;return {scale:s,rot:Math.atan2(mm.b,mm.a)*180/Math.PI};}catch(e){return {scale:1,rot:0};}
+  }
+  function applyT(el){el.style.transform='translate(-50%,-50%) rotate('+(parseFloat(el.dataset.rot)||0)+'deg) scale('+(parseFloat(el.dataset.scale)||1)+')';}
   function marks(){return map.querySelectorAll('.seat.to-delete');}
   function setMark(seats,on){[].forEach.call(seats,function(s){s.classList.toggle('to-delete',on);});}
   function anyUnmarked(seats){return [].some.call(seats,function(s){return !s.classList.contains('to-delete');});}
+
+  // Cache each element's current scale/rotation so move, rotate and save all
+  // read from one source of truth instead of re-parsing the live transform.
+  [].forEach.call(map.querySelectorAll('[data-sec]'),function(el){
+    var d=decompose(el);
+    if(el.dataset.scale===undefined) el.dataset.scale=d.scale;
+    if(el.dataset.rot===undefined) el.dataset.rot=d.rot;
+  });
+
+  // ---- selection + rotation handle ----
+  var handle=document.createElement('div'); handle.id='rot-handle'; map.appendChild(handle);
+  function placeHandle(){
+    if(!selected){handle.style.display='none';return;}
+    var r=selected.getBoundingClientRect(),m=map.getBoundingClientRect();
+    handle.style.display='block';
+    handle.style.left=(r.left+r.width/2-m.left)+'px';
+    handle.style.top=(r.top-m.top-18)+'px';
+  }
+  function select(el){
+    if(selected) selected.classList.remove('selected');
+    selected=el;
+    if(el) el.classList.add('selected');
+    placeHandle();
+  }
+  handle.addEventListener('pointerdown',function(e){
+    if(!selected) return;
+    rotating=true; handle.classList.add('turning');
+    var r=selected.getBoundingClientRect();
+    rcx=r.left+r.width/2; rcy=r.top+r.height/2;
+    startAng=Math.atan2(e.clientY-rcy,e.clientX-rcx)*180/Math.PI;
+    startRot=parseFloat(selected.dataset.rot)||0;
+    document.body.classList.add('dragging-active');
+    e.preventDefault(); e.stopPropagation();
+  });
 
   // ---- drag (arrange mode) ----
   map.addEventListener('pointerdown',function(e){
     if(mode!=='arrange') return;
     var el=e.target.closest('[data-sec]'); if(!el) return;
-    active=el; moved=false;
+    active=el; moved=false; select(el);
     var m=map.getBoundingClientRect(),c=center(el);
     gx=e.clientX-(m.left+c.x); gy=e.clientY-(m.top+c.y);
     el.style.left=c.x+'px'; el.style.top=c.y+'px';
@@ -181,13 +235,22 @@ body.delete-mode .map .seat,body.delete-mode .map .rl,body.delete-mode .map .sl{
     e.preventDefault();
   });
   window.addEventListener('pointermove',function(e){
+    if(rotating&&selected){
+      var ang=Math.atan2(e.clientY-rcy,e.clientX-rcx)*180/Math.PI;
+      var rot=startRot+(ang-startAng);
+      if(e.shiftKey) rot=Math.round(rot/15)*15;   // hold Shift to snap to 15°
+      selected.dataset.rot=rot; applyT(selected); placeHandle();
+      return;
+    }
     if(!active) return;
     var m=map.getBoundingClientRect();
     var x=Math.max(0,Math.min(m.width,e.clientX-m.left-gx));
     var y=Math.max(0,Math.min(m.height,e.clientY-m.top-gy));
     active.style.left=x+'px'; active.style.top=y+'px'; moved=true;
+    if(selected===active) placeHandle();
   });
   window.addEventListener('pointerup',function(){
+    if(rotating){rotating=false;handle.classList.remove('turning');document.body.classList.remove('dragging-active');return;}
     if(!active) return;
     active.classList.remove('dragging'); document.body.classList.remove('dragging-active');
     if(moved) suppress=true; active=null;
@@ -196,7 +259,10 @@ body.delete-mode .map .seat,body.delete-mode .map .rl,body.delete-mode .map .sl{
   // ---- selection (delete mode) + drag-click suppression ----
   map.addEventListener('click',function(e){
     if(suppress){e.stopPropagation();e.preventDefault();suppress=false;return;}
-    if(mode!=='delete') return;
+    if(mode==='arrange'){
+      if(!e.target.closest('[data-sec]')&&e.target!==handle) select(null);
+      return;
+    }
     var seat=e.target.closest('.seat'), rl=e.target.closest('.rl'), sl=e.target.closest('.sl');
     if(seat){e.stopPropagation();e.preventDefault();seat.classList.toggle('to-delete');}
     else if(rl){e.stopPropagation();e.preventDefault();var rs=rl.closest('.row').querySelectorAll('.seat');setMark(rs,anyUnmarked(rs));}
@@ -213,16 +279,22 @@ body.delete-mode .map .seat,body.delete-mode .map .rl,body.delete-mode .map .sl{
 
   // ---- save ----
   function save(){
+    select(null);
     var m=map.getBoundingClientRect(),rules='';
     map.querySelectorAll('[data-sec]').forEach(function(el){
-      var c=center(el),x=(c.x/m.width*100).toFixed(2),y=(c.y/m.height*100).toFixed(2),s=scaleOf(el);
-      rules+='[data-sec="'+el.dataset.sec+'"]{left:'+x+'%;top:'+y+'%;transform:translate(-50%,-50%) scale('+s+');}\\n';
+      var c=center(el),x=(c.x/m.width*100).toFixed(2),y=(c.y/m.height*100).toFixed(2);
+      var s=parseFloat(el.dataset.scale)||1,r=(parseFloat(el.dataset.rot)||0).toFixed(2);
+      rules+='[data-sec="'+el.dataset.sec+'"]{left:'+x+'%;top:'+y+'%;transform:translate(-50%,-50%) rotate('+r+'deg) scale('+s+');}\\n';
     });
     var os=document.getElementById('orient-style');
     if(!os){os=document.createElement('style');os.id='orient-style';document.head.appendChild(os);}
     os.textContent='\\n'+BASE_CSS+'\\n'+rules;
-    map.querySelectorAll('[data-sec]').forEach(function(el){el.style.left='';el.style.top='';});
+    map.querySelectorAll('[data-sec]').forEach(function(el){el.style.left='';el.style.top='';el.style.transform='';});
+    // Pull the transient editor UI out before serializing so the saved file
+    // doesn't bake in (then duplicate on reload) the toolbar/handle.
+    handle.remove(); bar.remove();
     var out='<!DOCTYPE html>\\n'+document.documentElement.outerHTML;
+    map.appendChild(handle); document.body.appendChild(bar);
     var a=document.createElement('a');
     a.href=URL.createObjectURL(new Blob([out],{type:'text/html'}));
     a.download='seatmap-final.html'; a.click();
@@ -230,14 +302,14 @@ body.delete-mode .map .seat,body.delete-mode .map .rl,body.delete-mode .map .sl{
 
   // ---- toolbar ----
   var bar=document.createElement('div'); bar.id='editor-bar';
-  var hint=document.createElement('span'); hint.className='hint'; hint.textContent='Drag sections to rearrange';
+  var hint=document.createElement('span'); hint.className='hint'; hint.textContent='Drag to move · click a section, then drag the knob to rotate (Shift = snap 15°)';
   var delToggle=document.createElement('button'); delToggle.className='ghost'; delToggle.textContent='Delete mode';
   var delApply=document.createElement('button'); delApply.className='danger'; delApply.textContent='Delete selected'; delApply.disabled=true;
   var saveBtn=document.createElement('button'); saveBtn.textContent='Save layout';
   function updateCount(){var n=marks().length; delApply.disabled=(mode!=='delete'||n===0); delApply.textContent='Delete selected'+(n?' ('+n+')':'');}
   delToggle.addEventListener('click',function(){
-    if(mode==='delete'){mode='arrange';document.body.classList.remove('delete-mode');delToggle.className='ghost';hint.textContent='Drag sections to rearrange';setMark(marks(),false);}
-    else{mode='delete';document.body.classList.add('delete-mode');delToggle.className='danger';hint.textContent='Tap seats, or a row/section label, to mark — then Delete selected';}
+    if(mode==='delete'){mode='arrange';document.body.classList.remove('delete-mode');delToggle.className='ghost';hint.textContent='Drag to move · click a section, then drag the knob to rotate (Shift = snap 15°)';setMark(marks(),false);}
+    else{mode='delete';document.body.classList.add('delete-mode');delToggle.className='danger';hint.textContent='Tap seats, or a row/section label, to mark — then Delete selected';select(null);}
     updateCount();
   });
   delApply.addEventListener('click',applyDelete);
@@ -324,7 +396,7 @@ export async function orientSections(originalImagePath, finalHtmlPath, sections,
 
 // CLI: node orient.js <originalImage> <finalHtmlPath> <outputDir> [layoutJson]
 const args = process.argv.slice(2);
-if (args.length >= 3) {
+if (isMain && args.length >= 3) {
   const [originalImage, finalHtmlPath, outputDir] = args;
   const layoutJson = args[3] || path.join(outputDir, 'layout.json');
   const layout = JSON.parse(fs.readFileSync(layoutJson, 'utf8'));

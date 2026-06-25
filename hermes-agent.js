@@ -6,6 +6,7 @@ import { runPlaywrightLoop } from './playwright-loop.js';
 import { orientSections } from './orient.js';
 import path from 'path';
 import fs from 'fs';
+import { pathToFileURL } from 'url';
 
 // One full pass of the vision pipeline (extract -> render -> loop -> orient)
 // into `runDir`. Steps 2, 4 and 5 are non-deterministic vision calls, so each
@@ -87,8 +88,9 @@ export async function hermesAgent(inputPath, outputDir = './output', runs = 3) {
 }
 
 // CLI entry point: node hermes-agent.js <input> [outputDir] [runs]
+const isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
 const args = process.argv.slice(2);
-if (args.length > 0) {
+if (isMain && args.length > 0) {
   const inputPath = args[0];
   const outputDir = args[1] || './output';
   const runs = args[2] ? parseInt(args[2], 10) : 3;
