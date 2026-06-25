@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Seatmap</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:sans-serif;background:#f8fafc;display:flex;flex-direction:column;align-items:center;padding:24px 16px}
+.stage{width:260px;height:34px;background:#1f6feb;color:#fff;text-align:center;line-height:34px;border-radius:6px;font-size:12px;letter-spacing:3px;font-weight:700;margin:0 auto 20px}
+.map{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:20px}
+.sec{display:flex;flex-direction:column;gap:2px;align-items:center}
+.sl{font-size:10px;font-weight:700;color:#555;margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em}
+.row{display:flex;align-items:center;gap:3px}
+.rl{font-size:9px;font-weight:700;color:#999;width:15px;text-align:center}
+.sw{display:flex;gap:2px}
+.seat{width:18px;height:18px;border-radius:3px;border:1px solid #ccc;background:#e8f4fd;font-size:7px;cursor:pointer;color:#333;display:flex;align-items:center;justify-content:center;transition:background .12s}
+.seat:hover{background:#3b82f6;color:#fff}
+.seat.selected{background:#1d4ed8;color:#fff;border-color:#1d4ed8}
+.seat.wheelchair{background:#fef3c7;border-color:#f59e0b}
+.seat.companion{background:#d1fae5;border-color:#10b981}
+.seat.restricted{background:#fee2e2;border-color:#ef4444;opacity:.55;cursor:not-allowed}
+</style>
+<style id="orient-style">
+.map{position:relative;display:block;width:1360px;height:960px;margin:0 auto 20px;flex-wrap:nowrap;}
+.map [data-sec]{position:absolute;}
+.map .stage{margin:0;}
+[data-sec="stage"]{left:50.00%;top:4.00%;transform:translate(-50%,-50%) scale(1);}
+[data-sec="center"]{left:50.00%;top:38.00%;transform:translate(-50%,-50%) scale(1.05);}
+[data-sec="left-orchestra"]{left:22.00%;top:42.00%;transform:translate(-50%,-50%) scale(0.85);}
+[data-sec="right-orchestra"]{left:78.00%;top:42.00%;transform:translate(-50%,-50%) scale(0.85);}
+[data-sec="left-balcony"]{left:10.00%;top:68.00%;transform:translate(-50%,-50%) scale(0.75);}
+[data-sec="right-balcony"]{left:90.00%;top:68.00%;transform:translate(-50%,-50%) scale(0.75);}
+</style>
+<style id="editor-style">
+#editor-bar{position:fixed;top:12px;left:12px;z-index:9999;display:flex;gap:8px;align-items:center;background:#fff;border:1px solid #d0d7de;border-radius:8px;padding:8px 12px;box-shadow:0 2px 8px rgba(0,0,0,.12);font:12px sans-serif;}
+#editor-bar button{font:600 12px sans-serif;padding:6px 12px;border-radius:6px;border:1px solid #1f6feb;background:#1f6feb;color:#fff;cursor:pointer;}
+#editor-bar button.ghost{background:#fff;color:#1f6feb;}
+#editor-bar button.danger{background:#ef4444;border-color:#ef4444;}
+#editor-bar button:disabled{opacity:.45;cursor:not-allowed;}
+#editor-bar .hint{color:#666;max-width:340px;}
+.map [data-sec]{cursor:move;}
+.map [data-sec].dragging{outline:2px dashed #1f6feb;outline-offset:3px;opacity:.92;}
+.map [data-sec].selected{outline:2px solid #1f6feb;outline-offset:3px;}
+.map .row.row-selected{outline:2px solid #10b981;outline-offset:2px;border-radius:4px;}
+body:not(.delete-mode) .map .rl{cursor:pointer;}
+#editor-bar button.ghost{border-color:#1f6feb;}
+body.dragging-active{user-select:none;}
+#rot-handle{position:absolute;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;background:#fff;border:2px solid #1f6feb;cursor:grab;z-index:60;display:none;box-shadow:0 1px 3px rgba(0,0,0,.35);}
+#rot-handle::after{content:'';position:absolute;left:50%;top:100%;width:2px;height:16px;background:#1f6feb;transform:translateX(-50%);}
+#rot-handle.turning{cursor:grabbing;}
+body.delete-mode #rot-handle{display:none !important;}
+body.delete-mode .map [data-sec]{cursor:default;}
+body.delete-mode .map [data-sec].selected{outline:none;}
+body.delete-mode .map .seat,body.delete-mode .map .rl,body.delete-mode .map .sl{cursor:pointer;}
+.map .seat.to-delete{background:#ef4444 !important;border-color:#b91c1c !important;color:#fff !important;opacity:1 !important;}
+</style>
+</head>
+<body>
+<div class="map"><div class="stage" data-sec="stage">STAGE</div><div class="sec" data-sec="center"><div class="sl">Center Orchestra</div><div class="row"><span class="rl">AA</span><div class="sw"><button class="seat available" title="AA8">8</button><button class="seat available" title="AA9">9</button><button class="seat available" title="AA10">10</button><button class="seat available" title="AA11">11</button><button class="seat available" title="AA12">12</button><button class="seat available" title="AA13">13</button><button class="seat available" title="AA14">14</button><button class="seat available" title="AA15">15</button></div><span class="rl">AA</span></div><div class="row"><span class="rl">A</span><div class="sw"><button class="seat available" title="A9">9</button><button class="seat available" title="A10">10</button><button class="seat available" title="A11">11</button><button class="seat available" title="A12">12</button><button class="seat available" title="A13">13</button><button class="seat available" title="A14">14</button><button class="seat available" title="A15">15</button><button class="seat available" title="A16">16</button><button class="seat available" title="A17">17</button></div><span class="rl">A</span></div><div class="row"><span class="rl">B</span><div class="sw"><button class="seat available" title="B9">9</button><button class="seat available" title="B10">10</button><button class="seat available" title="B11">11</button><button class="seat available" title="B12">12</button><button class="seat available" title="B13">13</button><button class="seat available" title="B14">14</button><button class="seat available" title="B15">15</button><button class="seat available" title="B16">16</button><button class="seat available" title="B17">17</button></div><span class="rl">B</span></div><div class="row"><span class="rl">C</span><div class="sw"><button class="seat available" title="C9">9</button><button class="seat available" title="C10">10</button><button class="seat available" title="C11">11</button><button class="seat available" title="C12">12</button><button class="seat available" title="C13">13</button><button class="seat available" title="C14">14</button><button class="seat available" title="C15">15</button><button class="seat available" title="C16">16</button><button class="seat available" title="C17">17</button><button class="seat available" title="C18">18</button></div><span class="rl">C</span></div><div class="row"><span class="rl">D</span><div class="sw"><button class="seat available" title="D9">9</button><button class="seat available" title="D10">10</button><button class="seat available" title="D11">11</button><button class="seat available" title="D12">12</button><button class="seat available" title="D13">13</button><button class="seat available" title="D14">14</button><button class="seat available" title="D15">15</button><button class="seat available" title="D16">16</button><button class="seat available" title="D17">17</button><button class="seat available" title="D18">18</button><button class="seat available" title="D19">19</button></div><span class="rl">D</span></div><div class="row"><span class="rl">E</span><div class="sw"><button class="seat available" title="E9">9</button><button class="seat available" title="E10">10</button><button class="seat available" title="E11">11</button><button class="seat available" title="E12">12</button><button class="seat available" title="E13">13</button><button class="seat available" title="E14">14</button><button class="seat available" title="E15">15</button><button class="seat available" title="E16">16</button><button class="seat available" title="E17">17</button><button class="seat available" title="E18">18</button><button class="seat available" title="E19">19</button><button class="seat available" title="E20">20</button></div><span class="rl">E</span></div><div class="row"><span class="rl">F</span><div class="sw"><button class="seat available" title="F8">8</button><button class="seat available" title="F9">9</button><button class="seat available" title="F10">10</button><button class="seat available" title="F11">11</button><button class="seat available" title="F12">12</button><button class="seat available" title="F13">13</button><button class="seat available" title="F14">14</button><button class="seat available" title="F15">15</button><button class="seat available" title="F16">16</button><button class="seat available" title="F17">17</button><button class="seat available" title="F18">18</button><button class="seat available" title="F19">19</button></div><span class="rl">F</span></div><div class="row"><span class="rl">G</span><div class="sw"><button class="seat available" title="G8">8</button><button class="seat available" title="G9">9</button><button class="seat available" title="G10">10</button><button class="seat available" title="G11">11</button><button class="seat available" title="G12">12</button><button class="seat available" title="G13">13</button><button class="seat available" title="G14">14</button><button class="seat available" title="G15">15</button><button class="seat available" title="G16">16</button><button class="seat available" title="G17">17</button><button class="seat available" title="G18">18</button><button class="seat available" title="G19">19</button><button class="seat available" title="G20">20</button></div><span class="rl">G</span></div><div class="row"><span class="rl">H</span><div class="sw"><button class="seat available" title="H8">8</button><button class="seat available" title="H9">9</button><button class="seat available" title="H10">10</button><button class="seat available" title="H11">11</button><button class="seat available" title="H12">12</button><button class="seat available" title="H13">13</button><button class="seat available" title="H14">14</button><button class="seat available" title="H15">15</button><button class="seat available" title="H16">16</button><button class="seat available" title="H17">17</button><button class="seat available" title="H18">18</button><button class="seat available" title="H19">19</button><button class="seat available" title="H20">20</button></div><span class="rl">H</span></div><div class="row"><span class="rl">I</span><div class="sw"><button class="seat available" title="I7">7</button><button class="seat available" title="I8">8</button><button class="seat available" title="I9">9</button><button class="seat available" title="I10">10</button><button class="seat available" title="I11">11</button><button class="seat available" title="I12">12</button><button class="seat available" title="I13">13</button><button class="seat available" title="I14">14</button><button class="seat available" title="I15">15</button><button class="seat available" title="I16">16</button><button class="seat available" title="I17">17</button><button class="seat available" title="I18">18</button><button class="seat available" title="I19">19</button><button class="seat available" title="I20">20</button></div><span class="rl">I</span></div><div class="row"><span class="rl">J</span><div class="sw"><button class="seat available" title="J7">7</button><button class="seat available" title="J8">8</button><button class="seat available" title="J9">9</button><button class="seat available" title="J10">10</button><button class="seat available" title="J11">11</button><button class="seat available" title="J12">12</button><button class="seat available" title="J13">13</button><button class="seat available" title="J14">14</button><button class="seat available" title="J15">15</button><button class="seat available" title="J16">16</button><button class="seat available" title="J17">17</button><button class="seat available" title="J18">18</button><button class="seat available" title="J19">19</button><button class="seat available" title="J20">20</button></div><span class="rl">J</span></div><div class="row"><span class="rl">K</span><div class="sw"><button class="seat available" title="K1">1</button><button class="seat available" title="K2">2</button><button class="seat available" title="K3">3</button><button class="seat available" title="K4">4</button><button class="seat available" title="K5">5</button><button class="seat available" title="K6">6</button><button class="seat available" title="K7">7</button><button class="seat available" title="K8">8</button><button class="seat available" title="K9">9</button><button class="seat available" title="K10">10</button><button class="seat available" title="K11">11</button></div><span class="rl">K</span></div><div class="row"><span class="rl">L</span><div class="sw"><button class="seat available" title="L5">5</button><button class="seat available" title="L6">6</button><button class="seat available" title="L7">7</button><button class="seat available" title="L8">8</button><button class="seat available" title="L9">9</button><button class="seat available" title="L10">10</button><button class="seat available" title="L11">11</button><button class="seat available" title="L12">12</button><button class="seat available" title="L13">13</button><button class="seat available" title="L14">14</button><button class="seat available" title="L15">15</button></div><span class="rl">L</span></div><div class="row"><span class="rl">M</span><div class="sw"><button class="seat available" title="M5">5</button><button class="seat available" title="M6">6</button><button class="seat available" title="M7">7</button><button class="seat available" title="M8">8</button><button class="seat available" title="M9">9</button><button class="seat available" title="M10">10</button><button class="seat available" title="M11">11</button><button class="seat available" title="M12">12</button><button class="seat available" title="M13">13</button><button class="seat available" title="M14">14</button><button class="seat available" title="M15">15</button></div><span class="rl">M</span></div><div class="row"><span class="rl">N</span><div class="sw"><button class="seat available" title="N5">5</button><button class="seat available" title="N6">6</button><button class="seat available" title="N7">7</button><button class="seat available" title="N8">8</button><button class="seat available" title="N9">9</button><button class="seat available" title="N10">10</button><button class="seat available" title="N11">11</button><button class="seat available" title="N12">12</button><button class="seat available" title="N13">13</button><button class="seat available" title="N14">14</button><button class="seat available" title="N15">15</button></div><span class="rl">N</span></div><div class="row"><span class="rl">O</span><div class="sw"><button class="seat available" title="O5">5</button><button class="seat available" title="O6">6</button><button class="seat available" title="O7">7</button><button class="seat available" title="O8">8</button><button class="seat available" title="O9">9</button><button class="seat available" title="O10">10</button><button class="seat available" title="O11">11</button><button class="seat available" title="O12">12</button><button class="seat available" title="O13">13</button><button class="seat available" title="O14">14</button><button class="seat available" title="O15">15</button></div><span class="rl">O</span></div><div class="row"><span class="rl">P</span><div class="sw"><button class="seat available" title="P7">7</button><button class="seat available" title="P8">8</button><button class="seat available" title="P9">9</button><button class="seat available" title="P10">10</button><button class="seat available" title="P11">11</button><button class="seat available" title="P12">12</button><button class="seat available" title="P13">13</button><button class="seat available" title="P14">14</button><button class="seat available" title="P15">15</button><button class="seat available" title="P16">16</button><button class="seat available" title="P17">17</button><button class="seat available" title="P18">18</button></div><span class="rl">P</span></div></div><div class="sec" data-sec="left-orchestra"><div class="sl">Left Orchestra</div><div class="row"><span class="rl">AA</span><div class="sw"><button class="seat available" title="AA1">1</button><button class="seat available" title="AA2">2</button><button class="seat available" title="AA3">3</button><button class="seat available" title="AA4">4</button><button class="seat available" title="AA5">5</button><button class="seat available" title="AA6">6</button></div><span class="rl">AA</span></div><div class="row"><span class="rl">A</span><div class="sw"><button class="seat available" title="A1">1</button><button class="seat available" title="A2">2</button><button class="seat available" title="A3">3</button><button class="seat available" title="A4">4</button><button class="seat available" title="A5">5</button><button class="seat available" title="A6">6</button></div><span class="rl">A</span></div><div class="row"><span class="rl">B</span><div class="sw"><button class="seat available" title="B1">1</button><button class="seat available" title="B2">2</button><button class="seat available" title="B3">3</button><button class="seat available" title="B4">4</button><button class="seat available" title="B5">5</button><button class="seat available" title="B6">6</button><button class="seat available" title="B7">7</button></div><span class="rl">B</span></div><div class="row"><span class="rl">C</span><div class="sw"><button class="seat available" title="C1">1</button><button class="seat available" title="C2">2</button><button class="seat available" title="C3">3</button><button class="seat available" title="C4">4</button><button class="seat available" title="C5">5</button><button class="seat available" title="C6">6</button><button class="seat available" title="C7">7</button></div><span class="rl">C</span></div><div class="row"><span class="rl">D</span><div class="sw"><button class="seat available" title="D1">1</button><button class="seat available" title="D2">2</button><button class="seat available" title="D3">3</button><button class="seat available" title="D4">4</button><button class="seat available" title="D5">5</button><button class="seat available" title="D6">6</button><button class="seat available" title="D7">7</button><button class="seat available" title="D8">8</button></div><span class="rl">D</span></div><div class="row"><span class="rl">E</span><div class="sw"><button class="seat available" title="E1">1</button><button class="seat available" title="E2">2</button><button class="seat available" title="E3">3</button><button class="seat available" title="E4">4</button><button class="seat available" title="E5">5</button><button class="seat available" title="E6">6</button><button class="seat available" title="E7">7</button><button class="seat available" title="E8">8</button></div><span class="rl">E</span></div><div class="row"><span class="rl">F</span><div class="sw"><button class="seat available" title="F1">1</button><button class="seat available" title="F2">2</button><button class="seat available" title="F3">3</button><button class="seat available" title="F4">4</button><button class="seat available" title="F5">5</button><button class="seat available" title="F6">6</button><button class="seat available" title="F7">7</button><button class="seat available" title="F8">8</button></div><span class="rl">F</span></div><div class="row"><span class="rl">G</span><div class="sw"><button class="seat available" title="G1">1</button><button class="seat available" title="G2">2</button><button class="seat available" title="G3">3</button><button class="seat available" title="G4">4</button><button class="seat available" title="G5">5</button><button class="seat available" title="G6">6</button><button class="seat available" title="G7">7</button><button class="seat available" title="G8">8</button></div><span class="rl">G</span></div><div class="row"><span class="rl">H</span><div class="sw"><button class="seat available" title="H1">1</button><button class="seat available" title="H2">2</button><button class="seat available" title="H3">3</button><button class="seat available" title="H4">4</button><button class="seat available" title="H5">5</button><button class="seat available" title="H6">6</button><button class="seat available" title="H7">7</button></div><span class="rl">H</span></div><div class="row"><span class="rl">I</span><div class="sw"><button class="seat available" title="I1">1</button><button class="seat available" title="I2">2</button><button class="seat available" title="I3">3</button><button class="seat available" title="I4">4</button><button class="seat available" title="I5">5</button><button class="seat available" title="I6">6</button><button class="seat available" title="I7">7</button></div><span class="rl">I</span></div><div class="row"><span class="rl">J</span><div class="sw"><button class="seat available" title="J1">1</button><button class="seat available" title="J2">2</button><button class="seat available" title="J3">3</button><button class="seat available" title="J4">4</button><button class="seat available" title="J5">5</button><button class="seat available" title="J6">6</button></div><span class="rl">J</span></div><div class="row"><span class="rl">K</span><div class="sw"><button class="seat available" title="K1">1</button><button class="seat available" title="K2">2</button><button class="seat available" title="K3">3</button><button class="seat available" title="K4">4</button><button class="seat available" title="K5">5</button><button class="seat available" title="K6">6</button></div><span class="rl">K</span></div><div class="row"><span class="rl">L</span><div class="sw"><button class="seat available" title="L1">1</button><button class="seat available" title="L2">2</button><button class="seat available" title="L3">3</button><button class="seat available" title="L4">4</button><button class="seat available" title="L5">5</button></div><span class="rl">L</span></div><div class="row"><span class="rl">W</span><div class="sw"><button class="seat wheelchair" title="W1">1</button><button class="seat wheelchair" title="W2">2</button><button class="seat wheelchair" title="W3">3</button><button class="seat wheelchair" title="W4">4</button></div><span class="rl">W</span></div></div><div class="sec" data-sec="right-orchestra"><div class="sl">Right Orchestra</div><div class="row"><span class="rl">AA</span><div class="sw"><button class="seat available" title="AA16">16</button><button class="seat available" title="AA17">17</button><button class="seat available" title="AA18">18</button><button class="seat available" title="AA19">19</button><button class="seat available" title="AA20">20</button><button class="seat available" title="AA21">21</button><button class="seat available" title="AA22">22</button><button class="seat available" title="AA23">23</button><button class="seat available" title="AA24">24</button></div><span class="rl">AA</span></div><div class="row"><span class="rl">A</span><div class="sw"><button class="seat available" title="A18">18</button><button class="seat available" title="A19">19</button><button class="seat available" title="A20">20</button><button class="seat available" title="A21">21</button><button class="seat available" title="A22">22</button><button class="seat available" title="A23">23</button><button class="seat available" title="A24">24</button><button class="seat available" title="A25">25</button></div><span class="rl">A</span></div><div class="row"><span class="rl">B</span><div class="sw"><button class="seat available" title="B18">18</button><button class="seat available" title="B19">19</button><button class="seat available" title="B20">20</button><button class="seat available" title="B21">21</button><button class="seat available" title="B22">22</button><button class="seat available" title="B23">23</button><button class="seat available" title="B24">24</button><button class="seat available" title="B25">25</button><button class="seat available" title="B26">26</button></div><span class="rl">B</span></div><div class="row"><span class="rl">C</span><div class="sw"><button class="seat available" title="C19">19</button><button class="seat available" title="C20">20</button><button class="seat available" title="C21">21</button><button class="seat available" title="C22">22</button><button class="seat available" title="C23">23</button><button class="seat available" title="C24">24</button><button class="seat available" title="C25">25</button><button class="seat available" title="C26">26</button><button class="seat available" title="C27">27</button></div><span class="rl">C</span></div><div class="row"><span class="rl">D</span><div class="sw"><button class="seat available" title="D20">20</button><button class="seat available" title="D21">21</button><button class="seat available" title="D22">22</button><button class="seat available" title="D23">23</button><button class="seat available" title="D24">24</button><button class="seat available" title="D25">25</button><button class="seat available" title="D26">26</button><button class="seat available" title="D27">27</button></div><span class="rl">D</span></div><div class="row"><span class="rl">E</span><div class="sw"><button class="seat available" title="E20">20</button><button class="seat available" title="E21">21</button><button class="seat available" title="E22">22</button><button class="seat available" title="E23">23</button><button class="seat available" title="E24">24</button><button class="seat available" title="E25">25</button><button class="seat available" title="E26">26</button></div><span class="rl">E</span></div><div class="row"><span class="rl">F</span><div class="sw"><button class="seat available" title="F20">20</button><button class="seat available" title="F21">21</button><button class="seat available" title="F22">22</button><button class="seat available" title="F23">23</button><button class="seat available" title="F24">24</button><button class="seat available" title="F25">25</button><button class="seat available" title="F26">26</button></div><span class="rl">F</span></div><div class="row"><span class="rl">G</span><div class="sw"><button class="seat available" title="G21">21</button><button class="seat available" title="G22">22</button><button class="seat available" title="G23">23</button><button class="seat available" title="G24">24</button><button class="seat available" title="G25">25</button><button class="seat available" title="G26">26</button><button class="seat available" title="G27">27</button></div><span class="rl">G</span></div><div class="row"><span class="rl">H</span><div class="sw"><button class="seat available" title="H21">21</button><button class="seat available" title="H22">22</button><button class="seat available" title="H23">23</button><button class="seat available" title="H24">24</button><button class="seat available" title="H25">25</button><button class="seat available" title="H26">26</button></div><span class="rl">H</span></div><div class="row"><span class="rl">I</span><div class="sw"><button class="seat available" title="I21">21</button><button class="seat available" title="I22">22</button><button class="seat available" title="I23">23</button><button class="seat available" title="I24">24</button><button class="seat available" title="I25">25</button><button class="seat available" title="I26">26</button></div><span class="rl">I</span></div><div class="row"><span class="rl">J</span><div class="sw"><button class="seat available" title="J21">21</button><button class="seat available" title="J22">22</button><button class="seat available" title="J23">23</button><button class="seat available" title="J24">24</button><button class="seat available" title="J25">25</button></div><span class="rl">J</span></div><div class="row"><span class="rl">K</span><div class="sw"><button class="seat available" title="K21">21</button><button class="seat available" title="K22">22</button><button class="seat available" title="K23">23</button><button class="seat available" title="K24">24</button><button class="seat available" title="K25">25</button></div><span class="rl">K</span></div><div class="row"><span class="rl">L</span><div class="sw"><button class="seat available" title="L16">16</button><button class="seat available" title="L17">17</button><button class="seat available" title="L18">18</button><button class="seat available" title="L19">19</button></div><span class="rl">L</span></div><div class="row"><span class="rl">W</span><div class="sw"><button class="seat wheelchair" title="W5">5</button><button class="seat wheelchair" title="W6">6</button><button class="seat wheelchair" title="W7">7</button><button class="seat wheelchair" title="W8">8</button></div><span class="rl">W</span></div></div><div class="sec" data-sec="left-balcony"><div class="sl">Left Balcony</div><div class="row"><span class="rl">K</span><div class="sw"><button class="seat available" title="K1">1</button><button class="seat available" title="K2">2</button><button class="seat available" title="K3">3</button><button class="seat available" title="K4">4</button></div><span class="rl">K</span></div><div class="row"><span class="rl">L</span><div class="sw"><button class="seat available" title="L1">1</button><button class="seat available" title="L2">2</button><button class="seat available" title="L3">3</button><button class="seat available" title="L4">4</button></div><span class="rl">L</span></div><div class="row"><span class="rl">M</span><div class="sw"><button class="seat available" title="M1">1</button><button class="seat available" title="M2">2</button><button class="seat available" title="M3">3</button><button class="seat available" title="M4">4</button></div><span class="rl">M</span></div><div class="row"><span class="rl">N</span><div class="sw"><button class="seat available" title="N1">1</button><button class="seat available" title="N2">2</button><button class="seat available" title="N3">3</button><button class="seat available" title="N4">4</button></div><span class="rl">N</span></div><div class="row"><span class="rl">O</span><div class="sw"><button class="seat available" title="O1">1</button><button class="seat available" title="O2">2</button><button class="seat available" title="O3">3</button><button class="seat available" title="O4">4</button></div><span class="rl">O</span></div><div class="row"><span class="rl">P</span><div class="sw"><button class="seat available" title="P1">1</button><button class="seat available" title="P2">2</button><button class="seat available" title="P3">3</button><button class="seat available" title="P4">4</button><button class="seat available" title="P5">5</button></div><span class="rl">P</span></div></div><div class="sec" data-sec="right-balcony"><div class="sl">Right Balcony</div><div class="row"><span class="rl">K</span><div class="sw"><button class="seat available" title="K16">16</button><button class="seat available" title="K17">17</button><button class="seat available" title="K18">18</button><button class="seat available" title="K19">19</button></div><span class="rl">K</span></div><div class="row"><span class="rl">L</span><div class="sw"><button class="seat available" title="L16">16</button><button class="seat available" title="L17">17</button><button class="seat available" title="L18">18</button><button class="seat available" title="L19">19</button></div><span class="rl">L</span></div><div class="row"><span class="rl">M</span><div class="sw"><button class="seat available" title="M16">16</button><button class="seat available" title="M17">17</button><button class="seat available" title="M18">18</button><button class="seat available" title="M19">19</button></div><span class="rl">M</span></div><div class="row"><span class="rl">N</span><div class="sw"><button class="seat available" title="N16">16</button><button class="seat available" title="N17">17</button><button class="seat available" title="N18">18</button><button class="seat available" title="N19">19</button></div><span class="rl">N</span></div><div class="row"><span class="rl">O</span><div class="sw"><button class="seat available" title="O16">16</button><button class="seat available" title="O17">17</button><button class="seat available" title="O18">18</button><button class="seat available" title="O19">19</button></div><span class="rl">O</span></div><div class="row"><span class="rl">P</span><div class="sw"><button class="seat available" title="P20">20</button><button class="seat available" title="P21">21</button><button class="seat available" title="P22">22</button><button class="seat available" title="P23">23</button></div><span class="rl">P</span></div></div></div>
+<script>
+(function(){
+  var BASE_CSS=".map{position:relative;display:block;width:1360px;height:960px;margin:0 auto 20px;flex-wrap:nowrap;}\n.map [data-sec]{position:absolute;}\n.map .stage{margin:0;}";
+  var ARRANGE_HINT='Click a section → Add row · click a row label → Add seats (double-click it to rename) · drag to move · knob to rotate';
+  var map=document.querySelector('.map'); if(!map) return;
+  var mode='arrange';
+  var active=null,gx=0,gy=0,moved=false,suppress=false;
+  var selectedSec=null,selectedRow=null,rotating=false,rcx=0,rcy=0,startAng=0,startRot=0;
+  function center(el){var r=el.getBoundingClientRect(),m=map.getBoundingClientRect();return {x:r.left+r.width/2-m.left,y:r.top+r.height/2-m.top};}
+  // Split a computed transform into its scale and rotation (deg). Survives a
+  // reload where the baked transform is "...rotate(r) scale(s)" — reading .a
+  // alone would mistake scale*cos(r) for the scale.
+  function decompose(el){
+    var t=getComputedStyle(el).transform; if(!t||t==='none') return {scale:1,rot:0};
+    try{var mm=new DOMMatrixReadOnly(t);var s=Math.sqrt(mm.a*mm.a+mm.b*mm.b)||1;return {scale:s,rot:Math.atan2(mm.b,mm.a)*180/Math.PI};}catch(e){return {scale:1,rot:0};}
+  }
+  function applyT(el){el.style.transform='translate(-50%,-50%) rotate('+(parseFloat(el.dataset.rot)||0)+'deg) scale('+(parseFloat(el.dataset.scale)||1)+')';}
+  function marks(){return map.querySelectorAll('.seat.to-delete');}
+  function setMark(seats,on){[].forEach.call(seats,function(s){s.classList.toggle('to-delete',on);});}
+  function anyUnmarked(seats){return [].some.call(seats,function(s){return !s.classList.contains('to-delete');});}
+
+  // Cache each element's current scale/rotation so move, rotate and save all
+  // read from one source of truth instead of re-parsing the live transform.
+  [].forEach.call(map.querySelectorAll('[data-sec]'),function(el){
+    var d=decompose(el);
+    if(el.dataset.scale===undefined) el.dataset.scale=d.scale;
+    if(el.dataset.rot===undefined) el.dataset.rot=d.rot;
+  });
+
+  // ---- history (undo/redo) ----
+  // The canvas markup holds everything that changes — positions (inline
+  // left/top), rotation/scale (data-attrs), and additions/deletions of
+  // rows/seats. Snapshot map.innerHTML per committed action. The rotation
+  // handle is pulled out first (it has live listeners we must not clone) and
+  // transient highlight classes are stripped so a restored state is clean.
+  var hist=[],hidx=-1;
+  function snapshot(){
+    var a1=map.querySelector('[data-sec].selected'),a2=map.querySelector('.dragging'),a3=map.querySelector('.row-selected');
+    if(a1)a1.classList.remove('selected'); if(a2)a2.classList.remove('dragging'); if(a3)a3.classList.remove('row-selected');
+    handle.remove();
+    var snap=map.innerHTML;
+    map.appendChild(handle);
+    if(a1)a1.classList.add('selected'); if(a2)a2.classList.add('dragging'); if(a3)a3.classList.add('row-selected');
+    return snap;
+  }
+  function pushHistory(){
+    var s=snapshot();
+    if(hidx>=0&&hist[hidx]===s) return;            // skip no-op actions
+    hist=hist.slice(0,hidx+1); hist.push(s); hidx=hist.length-1;
+    if(hist.length>100){hist.shift();hidx--;}
+    updateUndo();
+  }
+  function restore(snap){
+    select(null); selectRow(null);
+    handle.remove();
+    map.innerHTML=snap;                            // delegated listeners on map survive this
+    map.appendChild(handle);
+    updateUndo();
+  }
+  function undo(){ if(hidx>0){hidx--; restore(hist[hidx]);} }
+  function redo(){ if(hidx<hist.length-1){hidx++; restore(hist[hidx]);} }
+
+  // ---- selection + rotation handle ----
+  var handle=document.createElement('div'); handle.id='rot-handle'; map.appendChild(handle);
+  function placeHandle(){
+    if(!selectedSec){handle.style.display='none';return;}
+    var r=selectedSec.getBoundingClientRect(),m=map.getBoundingClientRect();
+    handle.style.display='block';
+    handle.style.left=(r.left+r.width/2-m.left)+'px';
+    handle.style.top=(r.top-m.top-18)+'px';
+  }
+  function select(el){
+    if(selectedSec) selectedSec.classList.remove('selected');
+    selectedSec=el;
+    if(el){el.classList.add('selected'); if(selectedRow){selectedRow.classList.remove('row-selected');selectedRow=null;}}
+    placeHandle(); updateAdd();
+  }
+  function selectRow(row){
+    if(selectedRow) selectedRow.classList.remove('row-selected');
+    selectedRow=row;
+    if(row){row.classList.add('row-selected'); if(selectedSec){selectedSec.classList.remove('selected');selectedSec=null;placeHandle();}}
+    updateAdd();
+  }
+  handle.addEventListener('pointerdown',function(e){
+    if(!selectedSec) return;
+    rotating=true; handle.classList.add('turning');
+    var r=selectedSec.getBoundingClientRect();
+    rcx=r.left+r.width/2; rcy=r.top+r.height/2;
+    startAng=Math.atan2(e.clientY-rcy,e.clientX-rcx)*180/Math.PI;
+    startRot=parseFloat(selectedSec.dataset.rot)||0;
+    document.body.classList.add('dragging-active');
+    e.preventDefault(); e.stopPropagation();
+  });
+
+  // ---- builders (match render.js markup so new rows/seats behave like the rest) ----
+  function makeSeat(label,n){var b=document.createElement('button');b.className='seat available';b.title=label+n;b.textContent=n;return b;}
+  function makeRow(label,from,to){
+    var row=document.createElement('div');row.className='row';
+    var l1=document.createElement('span');l1.className='rl';l1.textContent=label;
+    var sw=document.createElement('div');sw.className='sw';
+    for(var n=from;n<=to;n++) sw.appendChild(makeSeat(label,n));
+    var l2=document.createElement('span');l2.className='rl';l2.textContent=label;
+    row.appendChild(l1);row.appendChild(sw);row.appendChild(l2);
+    return row;
+  }
+  function addRow(){
+    if(!selectedSec){alert('Select a section first (click it), then Add row.');return;}
+    var label=prompt('New row label (e.g. G):',''); if(label===null) return; label=(label.trim()||'?');
+    var from=parseInt(prompt('First seat number:','1'),10);
+    var to=parseInt(prompt('Last seat number:',String(isNaN(from)?1:from)),10);
+    if(isNaN(from)||isNaN(to)||to<from){alert('Invalid seat range — last must be ≥ first.');return;}
+    selectedSec.appendChild(makeRow(label,from,to));
+    placeHandle(); pushHistory();
+  }
+  function addSeats(){
+    if(!selectedRow){alert('Select a row first (click its row label on either side), then Add seats.');return;}
+    var n=parseInt(prompt('How many seats to add at the end of this row?','1'),10);
+    if(isNaN(n)||n<1){alert('Enter a positive number.');return;}
+    var sw=selectedRow.querySelector('.sw'); if(!sw) return;
+    var rl=selectedRow.querySelector('.rl'),label=rl?rl.textContent:'';
+    var max=0;[].forEach.call(sw.querySelectorAll('.seat'),function(s){var v=parseInt(s.textContent,10);if(!isNaN(v)&&v>max)max=v;});
+    for(var i=1;i<=n;i++) sw.appendChild(makeSeat(label,max+i));
+    pushHistory();
+  }
+  function editRowLabel(row){
+    if(!row) return;
+    var cur=(row.querySelector('.rl')||{}).textContent||'';
+    var next=prompt('Row label:',cur); if(next===null) return;
+    next=next.trim(); if(!next) return;
+    [].forEach.call(row.querySelectorAll('.rl'),function(s){s.textContent=next;});   // both side labels
+    [].forEach.call(row.querySelectorAll('.seat'),function(b){b.title=next+(b.textContent||'');});  // keep tooltips in sync
+    pushHistory();
+  }
+
+  // ---- drag / row-pick (arrange mode) ----
+  map.addEventListener('pointerdown',function(e){
+    if(mode!=='arrange') return;
+    var rl=e.target.closest('.rl');
+    if(rl){ selectRow(rl.closest('.row')); e.preventDefault(); return; }   // row label → select row, no drag
+    var el=e.target.closest('[data-sec]'); if(!el) return;
+    active=el; moved=false; select(el);
+    var m=map.getBoundingClientRect(),c=center(el);
+    gx=e.clientX-(m.left+c.x); gy=e.clientY-(m.top+c.y);
+    el.style.left=c.x+'px'; el.style.top=c.y+'px';
+    el.classList.add('dragging'); document.body.classList.add('dragging-active');
+    e.preventDefault();
+  });
+  // double-click a row label to rename the row (arrange mode only)
+  map.addEventListener('dblclick',function(e){
+    if(mode!=='arrange') return;
+    var rl=e.target.closest('.rl'); if(!rl) return;
+    e.preventDefault(); e.stopPropagation();
+    editRowLabel(rl.closest('.row'));
+  });
+  window.addEventListener('pointermove',function(e){
+    if(rotating&&selectedSec){
+      var ang=Math.atan2(e.clientY-rcy,e.clientX-rcx)*180/Math.PI;
+      var rot=startRot+(ang-startAng);
+      if(e.shiftKey) rot=Math.round(rot/15)*15;   // hold Shift to snap to 15°
+      selectedSec.dataset.rot=rot; applyT(selectedSec); placeHandle();
+      return;
+    }
+    if(!active) return;
+    var m=map.getBoundingClientRect();
+    var x=Math.max(0,Math.min(m.width,e.clientX-m.left-gx));
+    var y=Math.max(0,Math.min(m.height,e.clientY-m.top-gy));
+    active.style.left=x+'px'; active.style.top=y+'px'; moved=true;
+    if(selectedSec===active) placeHandle();
+  });
+  window.addEventListener('pointerup',function(){
+    if(rotating){rotating=false;handle.classList.remove('turning');document.body.classList.remove('dragging-active');pushHistory();return;}
+    if(!active) return;
+    active.classList.remove('dragging'); document.body.classList.remove('dragging-active');
+    var didMove=moved; if(moved) suppress=true; active=null;
+    if(didMove) pushHistory();
+  });
+
+  // ---- click: booking (arrange) / marking (delete) / drag-suppression ----
+  map.addEventListener('click',function(e){
+    if(suppress){e.stopPropagation();e.preventDefault();suppress=false;return;}
+    if(mode==='arrange'){
+      var bk=e.target.closest('.seat');
+      if(bk&&!bk.classList.contains('restricted')){bk.classList.toggle('selected');return;}  // book/unbook
+      if(!e.target.closest('[data-sec]')&&e.target!==handle){select(null);selectRow(null);}
+      return;
+    }
+    var seat=e.target.closest('.seat'), rl=e.target.closest('.rl'), sl=e.target.closest('.sl');
+    if(seat){e.stopPropagation();e.preventDefault();seat.classList.toggle('to-delete');}
+    else if(rl){e.stopPropagation();e.preventDefault();var rs=rl.closest('.row').querySelectorAll('.seat');setMark(rs,anyUnmarked(rs));}
+    else if(sl){e.stopPropagation();e.preventDefault();var ss=sl.closest('[data-sec]').querySelectorAll('.seat');setMark(ss,anyUnmarked(ss));}
+    updateCount();
+  },true);
+
+  function applyDelete(){
+    [].forEach.call(marks(),function(s){s.remove();});
+    map.querySelectorAll('.row').forEach(function(row){var sw=row.querySelector('.sw');if(!sw||sw.querySelectorAll('.seat').length===0)row.remove();});
+    map.querySelectorAll('[data-sec]').forEach(function(sec){if(sec.classList.contains('stage'))return;if(sec.querySelectorAll('.seat').length===0)sec.remove();});
+    updateCount(); pushHistory();
+  }
+
+  // ---- save ----
+  function save(){
+    select(null); selectRow(null);
+    var m=map.getBoundingClientRect(),rules='';
+    map.querySelectorAll('[data-sec]').forEach(function(el){
+      var c=center(el),x=(c.x/m.width*100).toFixed(2),y=(c.y/m.height*100).toFixed(2);
+      var s=parseFloat(el.dataset.scale)||1,r=(parseFloat(el.dataset.rot)||0).toFixed(2);
+      rules+='[data-sec="'+el.dataset.sec+'"]{left:'+x+'%;top:'+y+'%;transform:translate(-50%,-50%) rotate('+r+'deg) scale('+s+');}\n';
+    });
+    var os=document.getElementById('orient-style');
+    if(!os){os=document.createElement('style');os.id='orient-style';document.head.appendChild(os);}
+    os.textContent='\n'+BASE_CSS+'\n'+rules;
+    map.querySelectorAll('[data-sec]').forEach(function(el){el.style.left='';el.style.top='';el.style.transform='';});
+    // Pull the transient editor UI out before serializing so the saved file
+    // doesn't bake in (then duplicate on reload) the toolbar/handle.
+    handle.remove(); bar.remove();
+    var out='<!DOCTYPE html>\n'+document.documentElement.outerHTML;
+    map.appendChild(handle); document.body.appendChild(bar);
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([out],{type:'text/html'}));
+    a.download='seatmap-final.html'; a.click();
+  }
+
+  // ---- toolbar ----
+  var bar=document.createElement('div'); bar.id='editor-bar';
+  var hint=document.createElement('span'); hint.className='hint'; hint.textContent=ARRANGE_HINT;
+  var addRowBtn=document.createElement('button'); addRowBtn.className='ghost'; addRowBtn.textContent='Add row';
+  var addSeatBtn=document.createElement('button'); addSeatBtn.className='ghost'; addSeatBtn.textContent='Add seats';
+  var undoBtn=document.createElement('button'); undoBtn.className='ghost'; undoBtn.textContent='Undo'; undoBtn.disabled=true;
+  var redoBtn=document.createElement('button'); redoBtn.className='ghost'; redoBtn.textContent='Redo'; redoBtn.disabled=true;
+  var delToggle=document.createElement('button'); delToggle.className='ghost'; delToggle.textContent='Delete mode';
+  var delApply=document.createElement('button'); delApply.className='danger'; delApply.textContent='Delete selected'; delApply.disabled=true;
+  var saveBtn=document.createElement('button'); saveBtn.textContent='Save layout';
+  function updateCount(){var n=marks().length; delApply.disabled=(mode!=='delete'||n===0); delApply.textContent='Delete selected'+(n?' ('+n+')':'');}
+  function updateUndo(){undoBtn.disabled=hidx<=0; redoBtn.disabled=hidx>=hist.length-1;}
+  function updateAdd(){addRowBtn.disabled=(mode!=='arrange'||!selectedSec); addSeatBtn.disabled=(mode!=='arrange'||!selectedRow);}
+  delToggle.addEventListener('click',function(){
+    if(mode==='delete'){mode='arrange';document.body.classList.remove('delete-mode');delToggle.className='ghost';hint.textContent=ARRANGE_HINT;setMark(marks(),false);}
+    else{mode='delete';document.body.classList.add('delete-mode');delToggle.className='danger';hint.textContent='Tap seats, or a row/section label, to mark — then Delete selected';select(null);selectRow(null);}
+    updateCount(); updateAdd();
+  });
+  addRowBtn.addEventListener('click',addRow);
+  addSeatBtn.addEventListener('click',addSeats);
+  undoBtn.addEventListener('click',undo);
+  redoBtn.addEventListener('click',redo);
+  delApply.addEventListener('click',applyDelete);
+  saveBtn.addEventListener('click',save);
+  bar.appendChild(hint); bar.appendChild(addRowBtn); bar.appendChild(addSeatBtn); bar.appendChild(undoBtn); bar.appendChild(redoBtn); bar.appendChild(delToggle); bar.appendChild(delApply); bar.appendChild(saveBtn);
+  document.body.appendChild(bar);
+  updateAdd(); pushHistory();   // baseline snapshot so the first undo returns here
+})();
+</script>
+</body>
+</html>

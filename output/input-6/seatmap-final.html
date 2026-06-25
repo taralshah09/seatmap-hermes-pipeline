@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Seatmap Editor</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0d1117;color:#e6edf3;overflow:hidden;height:100vh;display:flex;flex-direction:column}
+
+/* ── Toolbar ── */
+#toolbar{height:48px;background:#161b22;border-bottom:1px solid #30363d;display:flex;align-items:center;gap:6px;padding:0 14px;flex-shrink:0;z-index:100}
+.logo{font-weight:800;font-size:13px;color:#58a6ff;margin-right:8px;letter-spacing:1px}
+.tb-sep{width:1px;height:26px;background:#30363d;margin:0 4px}
+.tb-btn{height:30px;padding:0 11px;border-radius:6px;border:1px solid #30363d;background:#21262d;color:#e6edf3;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap;transition:all .12s}
+.tb-btn:hover{background:#388bfd22;border-color:#58a6ff;color:#58a6ff}
+.tb-btn:disabled{opacity:.35;cursor:not-allowed}
+.tb-btn.danger:hover{background:#f8514922;border-color:#f85149;color:#f85149}
+#zoom-label{font-size:11px;color:#8b949e;min-width:38px;text-align:center}
+#status{margin-left:auto;font-size:11px;color:#8b949e}
+
+/* ── Canvas ── */
+#canvas-wrap{flex:1;overflow:hidden;position:relative;cursor:default;background:#0d1117;background-image:radial-gradient(circle,#1c2128 1px,transparent 1px);background-size:24px 24px}
+#canvas{position:absolute;width:4000px;height:3000px;transform-origin:0 0}
+
+/* ── Stage ── */
+#stage-el{position:absolute;background:#1f6feb;color:#fff;padding:8px 48px;border-radius:6px;font-size:12px;font-weight:700;letter-spacing:3px;cursor:grab;user-select:none;box-shadow:0 0 20px #1f6feb44;z-index:10;border:1px solid #388bfd}
+#stage-el:active{cursor:grabbing}
+
+/* ── Sections ── */
+.section{position:absolute;background:#161b22cc;border:1.5px solid #30363d;border-radius:10px;min-width:100px;user-select:none;transition:border-color .15s,box-shadow .15s}
+.section.selected{border-color:#58a6ff;box-shadow:0 0 0 2px #58a6ff33}
+.sec-header{display:flex;align-items:center;gap:4px;padding:5px 8px 4px;cursor:grab;border-radius:8px 8px 0 0;background:#21262d}
+.sec-header:active{cursor:grabbing}
+.sec-label{font-size:10px;font-weight:700;color:#58a6ff;text-transform:uppercase;letter-spacing:.07em;flex:1;outline:none;min-width:30px;border-bottom:1px solid transparent}
+.sec-label:focus{border-bottom-color:#58a6ff}
+.sec-body{padding:3px 6px 4px}
+.sec-footer{padding:2px 6px 5px;display:flex;align-items:center;gap:4px}
+.sec-add-row{font-size:10px;padding:2px 8px;border-radius:4px;border:1px dashed #30363d;background:transparent;color:#8b949e;cursor:pointer;transition:all .12s}
+.sec-add-row:hover{border-color:#58a6ff;color:#58a6ff}
+.sec-del{margin-left:auto;width:18px;height:18px;border-radius:4px;border:none;background:#f8514922;color:#f85149;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s}
+.sec-del:hover{background:#f85149;color:#fff}
+
+/* ── Rows ── */
+.row-wrap{display:flex;align-items:center;gap:3px;margin:1.5px 0}
+.row-label{font-size:9px;font-weight:700;color:#8b949e;width:15px;text-align:center;flex-shrink:0;outline:none;cursor:text}
+.row-label:focus{color:#58a6ff}
+.seats-wrap{display:flex;gap:2px}
+.row-add-seat,.row-del{width:15px;height:17px;border-radius:3px;border:none;font-size:11px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .12s}
+.row-wrap:hover .row-add-seat,.row-wrap:hover .row-del{opacity:1}
+.row-add-seat{background:#21262d;color:#8b949e}
+.row-add-seat:hover{background:#388bfd22;color:#58a6ff}
+.row-del{background:#f8514922;color:#f85149}
+.row-del:hover{background:#f85149;color:#fff}
+
+/* ── Seats ── */
+.seat{width:17px;height:17px;border-radius:3px;border:1px solid #30363d;background:#21262d;color:#8b949e;font-size:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative;transition:background .1s,border-color .1s;flex-shrink:0}
+.seat:hover{background:#388bfd22;border-color:#58a6ff;color:#58a6ff}
+.seat:hover .seat-x{display:flex}
+.seat.selected{background:#1f6feb;color:#fff;border-color:#388bfd}
+.seat.wheelchair{background:#f0883e22;border-color:#f0883e}
+.seat.companion{background:#3fb95022;border-color:#3fb950}
+.seat.restricted{background:#f8514922;border-color:#f85149;opacity:.6}
+.seat-x{display:none;position:absolute;top:-4px;right:-4px;width:9px;height:9px;background:#f85149;color:#fff;border-radius:50%;font-size:8px;cursor:pointer;align-items:center;justify-content:center;z-index:5;line-height:1}
+
+/* ── Context menu ── */
+#ctx-menu{position:fixed;background:#161b22;border:1px solid #30363d;border-radius:8px;padding:4px 0;z-index:1000;box-shadow:0 8px 32px #00000088;display:none;min-width:155px}
+#ctx-menu.show{display:block}
+.ctx-item{padding:7px 13px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .1s}
+.ctx-item:hover{background:#388bfd22;color:#58a6ff}
+.ctx-sep{height:1px;background:#30363d;margin:3px 0}
+
+/* ── Add Section Modal ── */
+#modal-bg{display:none;position:fixed;inset:0;background:#00000088;z-index:500;align-items:center;justify-content:center}
+#modal-bg.show{display:flex}
+#modal{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:22px;width:320px}
+#modal h3{font-size:13px;margin-bottom:14px;color:#58a6ff}
+#modal label{font-size:11px;color:#8b949e;display:block;margin-bottom:3px}
+#modal input{width:100%;padding:7px 10px;border-radius:6px;border:1px solid #30363d;background:#0d1117;color:#e6edf3;font-size:12px;margin-bottom:11px;outline:none}
+#modal input:focus{border-color:#58a6ff}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
+.modal-btns button{padding:7px 16px;border-radius:6px;font-size:12px;cursor:pointer;border:1px solid #30363d;transition:all .12s}
+.btn-cancel{background:transparent;color:#8b949e}
+.btn-cancel:hover{border-color:#8b949e;color:#e6edf3}
+.btn-ok{background:#1f6feb;border-color:#388bfd;color:#fff}
+.btn-ok:hover{background:#388bfd}
+
+/* ── Legend ── */
+#legend{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:12px;background:#161b22cc;border:1px solid #30363d;border-radius:20px;padding:6px 16px;z-index:50}
+.leg{display:flex;align-items:center;gap:5px;font-size:10px;color:#8b949e}
+.leg-dot{width:12px;height:12px;border-radius:2px;flex-shrink:0}
+</style>
+</head>
+<body>
+
+<div id="toolbar">
+  <span class="logo">HERMES</span>
+  <div class="tb-sep"></div>
+  <button class="tb-btn" id="btn-add-sec">＋ Section</button>
+  <button class="tb-btn" id="btn-undo">↩</button>
+  <button class="tb-btn" id="btn-redo">↪</button>
+  <div class="tb-sep"></div>
+  <button class="tb-btn" id="btn-zoom-out">－</button>
+  <span id="zoom-label">100%</span>
+  <button class="tb-btn" id="btn-zoom-in">＋</button>
+  <button class="tb-btn" id="btn-fit">⊡ Fit</button>
+  <div class="tb-sep"></div>
+  <button class="tb-btn" id="btn-export">⬇ Export</button>
+  <span id="status">Drag sections · Right-click seats for options</span>
+</div>
+
+<div id="canvas-wrap"><div id="canvas"></div></div>
+
+<div id="ctx-menu">
+  <div class="ctx-item" data-t="available">◻ Available</div>
+  <div class="ctx-item" data-t="selected">■ Selected / Booked</div>
+  <div class="ctx-item" data-t="wheelchair">♿ Wheelchair</div>
+  <div class="ctx-item" data-t="companion">◈ Companion</div>
+  <div class="ctx-item" data-t="restricted">✕ Restricted</div>
+  <div class="ctx-sep"></div>
+  <div class="ctx-item" id="ctx-del-seat" data-t="__del__">🗑 Delete Seat</div>
+</div>
+
+<div id="modal-bg">
+  <div id="modal">
+    <h3>Add New Section</h3>
+    <label>Section label</label>
+    <input id="m-label" placeholder="e.g. Balcony Left" />
+    <label>Rows (comma-separated)</label>
+    <input id="m-rows" placeholder="e.g. A,B,C,D,E" />
+    <label>Seat range per row</label>
+    <input id="m-seats" placeholder="e.g. 1-20" />
+    <div class="modal-btns">
+      <button class="btn-cancel" id="m-cancel">Cancel</button>
+      <button class="btn-ok" id="m-ok">Add Section</button>
+    </div>
+  </div>
+</div>
+
+<div id="legend">
+  <div class="leg"><div class="leg-dot" style="background:#21262d;border:1px solid #30363d"></div>Available</div>
+  <div class="leg"><div class="leg-dot" style="background:#1f6feb"></div>Selected</div>
+  <div class="leg"><div class="leg-dot" style="background:#f0883e22;border:1px solid #f0883e"></div>Wheelchair</div>
+  <div class="leg"><div class="leg-dot" style="background:#3fb95022;border:1px solid #3fb950"></div>Companion</div>
+  <div class="leg"><div class="leg-dot" style="background:#f8514922;border:1px solid #f85149"></div>Restricted</div>
+</div>
+
+<script>
+// ─── State ─────────────────────────────────────────────────────────────────
+
+const INIT = {"stageAtTop":true,"stage":{"x":580,"y":30},"sections":[{"id":"A","label":"A","x":40,"y":380,"rows":[{"rowId":"1","seats":[{"num":21,"type":"available"},{"num":11,"type":"available"},{"num":1,"type":"available"}]},{"rowId":"2","seats":[{"num":22,"type":"available"},{"num":12,"type":"available"},{"num":2,"type":"available"}]},{"rowId":"3","seats":[{"num":23,"type":"available"},{"num":13,"type":"available"},{"num":3,"type":"available"}]},{"rowId":"4","seats":[{"num":24,"type":"available"},{"num":14,"type":"available"},{"num":4,"type":"available"}]},{"rowId":"5","seats":[{"num":25,"type":"available"},{"num":15,"type":"available"},{"num":5,"type":"available"}]},{"rowId":"6","seats":[{"num":26,"type":"available"},{"num":16,"type":"available"},{"num":6,"type":"available"}]},{"rowId":"7","seats":[{"num":27,"type":"available"},{"num":17,"type":"available"},{"num":7,"type":"available"}]},{"rowId":"8","seats":[{"num":28,"type":"available"},{"num":18,"type":"available"},{"num":8,"type":"available"}]},{"rowId":"9","seats":[{"num":29,"type":"available"},{"num":19,"type":"available"},{"num":9,"type":"available"}]},{"rowId":"10","seats":[{"num":40,"type":"available"},{"num":30,"type":"available"},{"num":20,"type":"available"},{"num":10,"type":"available"}]}]},{"id":"B","label":"B","x":40,"y":690,"rows":[{"rowId":"1","seats":[{"num":21,"type":"available"},{"num":11,"type":"available"},{"num":1,"type":"available"}]},{"rowId":"2","seats":[{"num":22,"type":"available"},{"num":12,"type":"available"},{"num":2,"type":"available"}]},{"rowId":"3","seats":[{"num":23,"type":"available"},{"num":13,"type":"available"},{"num":3,"type":"available"}]},{"rowId":"4","seats":[{"num":24,"type":"available"},{"num":14,"type":"available"},{"num":4,"type":"available"}]},{"rowId":"5","seats":[{"num":25,"type":"available"},{"num":15,"type":"available"},{"num":5,"type":"available"}]},{"rowId":"6","seats":[{"num":26,"type":"available"},{"num":16,"type":"available"},{"num":6,"type":"available"}]},{"rowId":"7","seats":[{"num":27,"type":"available"},{"num":17,"type":"available"},{"num":7,"type":"available"}]},{"rowId":"8","seats":[{"num":28,"type":"available"},{"num":18,"type":"available"},{"num":8,"type":"available"}]},{"rowId":"9","seats":[{"num":29,"type":"available"},{"num":19,"type":"available"},{"num":9,"type":"available"}]},{"rowId":"10","seats":[{"num":40,"type":"available"},{"num":30,"type":"available"},{"num":20,"type":"available"},{"num":10,"type":"available"}]}]},{"id":"C","label":"C","x":40,"y":1000,"rows":[{"rowId":"1","seats":[{"num":21,"type":"available"},{"num":11,"type":"available"},{"num":1,"type":"available"}]},{"rowId":"2","seats":[{"num":22,"type":"available"},{"num":12,"type":"available"},{"num":2,"type":"available"}]},{"rowId":"3","seats":[{"num":23,"type":"available"},{"num":13,"type":"available"},{"num":3,"type":"available"}]},{"rowId":"4","seats":[{"num":24,"type":"available"},{"num":14,"type":"available"},{"num":4,"type":"available"}]},{"rowId":"5","seats":[{"num":25,"type":"available"},{"num":15,"type":"available"},{"num":5,"type":"available"}]},{"rowId":"6","seats":[{"num":26,"type":"available"},{"num":16,"type":"available"},{"num":6,"type":"available"}]},{"rowId":"7","seats":[{"num":27,"type":"available"},{"num":17,"type":"available"},{"num":7,"type":"available"}]},{"rowId":"8","seats":[{"num":28,"type":"available"},{"num":18,"type":"available"},{"num":8,"type":"available"}]},{"rowId":"9","seats":[{"num":29,"type":"available"},{"num":19,"type":"available"},{"num":9,"type":"available"}]},{"rowId":"10","seats":[{"num":40,"type":"available"},{"num":30,"type":"available"},{"num":20,"type":"available"},{"num":10,"type":"available"}]}]},{"id":"D","label":"D","x":40,"y":1310,"rows":[{"rowId":"1","seats":[{"num":19,"type":"available"},{"num":13,"type":"available"},{"num":7,"type":"available"},{"num":1,"type":"available"}]},{"rowId":"2","seats":[{"num":20,"type":"available"},{"num":14,"type":"available"},{"num":8,"type":"available"},{"num":2,"type":"available"}]},{"rowId":"3","seats":[{"num":21,"type":"available"},{"num":15,"type":"available"},{"num":9,"type":"available"},{"num":3,"type":"available"}]},{"rowId":"4","seats":[{"num":22,"type":"available"},{"num":16,"type":"available"},{"num":10,"type":"available"},{"num":4,"type":"available"}]},{"rowId":"5","seats":[{"num":23,"type":"available"},{"num":17,"type":"available"},{"num":11,"type":"available"},{"num":5,"type":"available"}]},{"rowId":"6","seats":[{"num":24,"type":"available"},{"num":18,"type":"available"},{"num":12,"type":"available"},{"num":6,"type":"available"}]}]},{"id":"E","label":"E","x":1060,"y":380,"rows":[{"rowId":"1","seats":[{"num":7,"type":"available"},{"num":13,"type":"available"},{"num":19,"type":"available"},{"num":24,"type":"available"}]},{"rowId":"2","seats":[{"num":8,"type":"available"},{"num":14,"type":"available"},{"num":20,"type":"available"},{"num":23,"type":"available"}]},{"rowId":"3","seats":[{"num":9,"type":"available"},{"num":15,"type":"available"},{"num":21,"type":"available"},{"num":22,"type":"available"}]},{"rowId":"4","seats":[{"num":10,"type":"available"},{"num":16,"type":"available"},{"num":22,"type":"available"},{"num":21,"type":"available"}]},{"rowId":"5","seats":[{"num":11,"type":"available"},{"num":17,"type":"available"},{"num":23,"type":"available"},{"num":20,"type":"available"}]},{"rowId":"6","seats":[{"num":12,"type":"available"},{"num":18,"type":"available"},{"num":24,"type":"available"},{"num":19,"type":"available"}]}]},{"id":"F","label":"F","x":1060,"y":598,"rows":[{"rowId":"1","seats":[{"num":11,"type":"available"},{"num":21,"type":"available"},{"num":31,"type":"available"}]},{"rowId":"2","seats":[{"num":12,"type":"available"},{"num":22,"type":"available"},{"num":32,"type":"available"}]},{"rowId":"3","seats":[{"num":13,"type":"available"},{"num":23,"type":"available"},{"num":33,"type":"available"}]},{"rowId":"4","seats":[{"num":14,"type":"available"},{"num":24,"type":"available"},{"num":34,"type":"available"}]},{"rowId":"5","seats":[{"num":15,"type":"available"},{"num":25,"type":"available"},{"num":35,"type":"available"}]},{"rowId":"6","seats":[{"num":16,"type":"available"},{"num":26,"type":"available"},{"num":36,"type":"available"}]},{"rowId":"7","seats":[{"num":17,"type":"available"},{"num":27,"type":"available"},{"num":37,"type":"available"}]},{"rowId":"8","seats":[{"num":18,"type":"available"},{"num":28,"type":"available"},{"num":38,"type":"available"}]},{"rowId":"9","seats":[{"num":19,"type":"available"},{"num":29,"type":"available"},{"num":39,"type":"available"}]},{"rowId":"10","seats":[{"num":10,"type":"available"},{"num":20,"type":"available"},{"num":30,"type":"available"},{"num":40,"type":"available"}]}]},{"id":"G","label":"G","x":1060,"y":908,"rows":[{"rowId":"1","seats":[{"num":11,"type":"available"},{"num":21,"type":"available"},{"num":31,"type":"available"}]},{"rowId":"2","seats":[{"num":12,"type":"available"},{"num":22,"type":"available"},{"num":32,"type":"available"}]},{"rowId":"3","seats":[{"num":13,"type":"available"},{"num":23,"type":"available"},{"num":33,"type":"available"}]},{"rowId":"4","seats":[{"num":14,"type":"available"},{"num":24,"type":"available"},{"num":34,"type":"available"}]},{"rowId":"5","seats":[{"num":15,"type":"available"},{"num":25,"type":"available"},{"num":35,"type":"available"}]},{"rowId":"6","seats":[{"num":16,"type":"available"},{"num":26,"type":"available"},{"num":36,"type":"available"}]},{"rowId":"7","seats":[{"num":17,"type":"available"},{"num":27,"type":"available"},{"num":37,"type":"available"}]},{"rowId":"8","seats":[{"num":18,"type":"available"},{"num":28,"type":"available"},{"num":38,"type":"available"}]},{"rowId":"9","seats":[{"num":19,"type":"available"},{"num":29,"type":"available"},{"num":39,"type":"available"}]},{"rowId":"10","seats":[{"num":10,"type":"available"},{"num":20,"type":"available"},{"num":30,"type":"available"},{"num":40,"type":"available"}]}]},{"id":"H","label":"H","x":1060,"y":1218,"rows":[{"rowId":"1","seats":[{"num":11,"type":"available"},{"num":21,"type":"available"},{"num":31,"type":"available"}]},{"rowId":"2","seats":[{"num":12,"type":"available"},{"num":22,"type":"available"},{"num":32,"type":"available"}]},{"rowId":"3","seats":[{"num":13,"type":"available"},{"num":23,"type":"available"},{"num":33,"type":"available"}]},{"rowId":"4","seats":[{"num":14,"type":"available"},{"num":24,"type":"available"},{"num":34,"type":"available"}]},{"rowId":"5","seats":[{"num":15,"type":"available"},{"num":25,"type":"available"},{"num":35,"type":"available"}]},{"rowId":"6","seats":[{"num":16,"type":"available"},{"num":26,"type":"available"},{"num":36,"type":"available"}]},{"rowId":"7","seats":[{"num":17,"type":"available"},{"num":27,"type":"available"},{"num":37,"type":"available"}]},{"rowId":"8","seats":[{"num":18,"type":"available"},{"num":28,"type":"available"},{"num":38,"type":"available"}]},{"rowId":"9","seats":[{"num":19,"type":"available"},{"num":29,"type":"available"},{"num":39,"type":"available"}]},{"rowId":"10","seats":[{"num":10,"type":"available"},{"num":20,"type":"available"},{"num":30,"type":"available"},{"num":40,"type":"available"}]}]}]};
+let state = deepClone(INIT);
+let history = [];
+let future  = [];
+let selectedId = null;
+let zoom = 1, panX = 60, panY = 60;
+let drag = null;   // active drag descriptor
+let pan  = null;   // active canvas pan descriptor
+let ctxTarget = null; // { sectionId, rowIndex, seatIndex }
+let idCounter = Date.now();
+
+function deepClone(o) { return JSON.parse(JSON.stringify(o)); }
+function uid() { return 'sec-' + (++idCounter); }
+
+// ─── History ───────────────────────────────────────────────────────────────
+
+function saveHistory() {
+  history.push(JSON.stringify(state));
+  if (history.length > 80) history.shift();
+  future = [];
+  updateToolbar();
+}
+
+function undo() {
+  if (!history.length) return;
+  future.push(JSON.stringify(state));
+  state = JSON.parse(history.pop());
+  render();
+}
+
+function redo() {
+  if (!future.length) return;
+  history.push(JSON.stringify(state));
+  state = JSON.parse(future.pop());
+  render();
+}
+
+// ─── Transform ─────────────────────────────────────────────────────────────
+
+function applyTransform() {
+  document.getElementById('canvas').style.transform =
+    'translate(' + panX + 'px,' + panY + 'px) scale(' + zoom + ')';
+  document.getElementById('zoom-label').textContent = Math.round(zoom * 100) + '%';
+}
+
+function zoomAt(delta, cx, cy) {
+  const wrap = document.getElementById('canvas-wrap');
+  const rect = wrap.getBoundingClientRect();
+  const ox = (cx - rect.left - panX) / zoom;
+  const oy = (cy - rect.top  - panY) / zoom;
+  zoom = Math.min(3, Math.max(0.2, zoom + delta));
+  panX = cx - rect.left - ox * zoom;
+  panY = cy - rect.top  - oy * zoom;
+  applyTransform();
+}
+
+function fitView() {
+  if (!state.sections.length) return;
+  const wrap = document.getElementById('canvas-wrap');
+  const ww = wrap.clientWidth, wh = wrap.clientHeight;
+  const xs = state.sections.map(s => s.x);
+  const ys = state.sections.map(s => s.y);
+  const x2 = state.sections.map(s => s.x + estimateWidth(s));
+  const y2 = state.sections.map(s => s.y + estimateHeight(s));
+  xs.push(state.stage.x); ys.push(state.stage.y);
+  x2.push(state.stage.x + 220); y2.push(state.stage.y + 40);
+  const minX = Math.min(...xs) - 20, minY = Math.min(...ys) - 20;
+  const maxX = Math.max(...x2) + 20, maxY = Math.max(...y2) + 20;
+  const scale = Math.min(ww / (maxX - minX), wh / (maxY - minY), 2);
+  zoom = scale;
+  panX = (ww - (maxX - minX) * scale) / 2 - minX * scale;
+  panY = (wh - (maxY - minY) * scale) / 2 - minY * scale;
+  applyTransform();
+}
+
+function estimateWidth(s) { return Math.max(...s.rows.map(r => r.seats.length), 0) * 20 + 60; }
+function estimateHeight(s) { return s.rows.length * 23 + 60; }
+
+// ─── Render ────────────────────────────────────────────────────────────────
+
+function render() {
+  const canvas = document.getElementById('canvas');
+  // Save label focus before wiping
+  const focusedId = document.activeElement && document.activeElement.dataset.focusKey;
+
+  // Remove old sections
+  canvas.querySelectorAll('.section').forEach(el => el.remove());
+
+  // Stage
+  let stageEl = document.getElementById('stage-el');
+  if (!stageEl) {
+    stageEl = document.createElement('div');
+    stageEl.id = 'stage-el';
+    canvas.appendChild(stageEl);
+    stageEl.addEventListener('mousedown', e => startDrag(e, 'stage', null));
+  }
+  stageEl.textContent = 'STAGE';
+  stageEl.style.left = state.stage.x + 'px';
+  stageEl.style.top  = state.stage.y + 'px';
+
+  // Sections
+  state.sections.forEach((sec, si) => {
+    const el = buildSection(sec, si);
+    canvas.appendChild(el);
+    // Restore focus
+    if (focusedId) {
+      const target = el.querySelector('[data-focus-key="' + focusedId + '"]');
+      if (target) { target.focus(); placeCaretAtEnd(target); }
+    }
+  });
+
+  applyTransform();
+  updateToolbar();
+  updateSelection();
+}
+
+function buildSection(sec, si) {
+  const el = document.createElement('div');
+  el.className = 'section' + (selectedId === sec.id ? ' selected' : '');
+  el.dataset.id = sec.id;
+  el.style.left = sec.x + 'px';
+  el.style.top  = sec.y + 'px';
+
+  // Header
+  const hdr = document.createElement('div');
+  hdr.className = 'sec-header';
+  hdr.addEventListener('mousedown', e => { selectSection(sec.id); startDrag(e, 'section', sec.id); });
+  hdr.addEventListener('click', e => selectSection(sec.id));
+
+  const lbl = document.createElement('span');
+  lbl.className = 'sec-label';
+  lbl.contentEditable = 'true';
+  lbl.dataset.focusKey = 'sec-lbl-' + sec.id;
+  lbl.textContent = sec.label;
+  lbl.addEventListener('input', () => { sec.label = lbl.textContent; });
+  lbl.addEventListener('blur',  () => { saveHistory(); });
+  lbl.addEventListener('mousedown', e => e.stopPropagation());
+  hdr.appendChild(lbl);
+  el.appendChild(hdr);
+
+  // Body
+  const body = document.createElement('div');
+  body.className = 'sec-body';
+
+  sec.rows.forEach((row, ri) => {
+    const rowWrap = document.createElement('div');
+    rowWrap.className = 'row-wrap';
+
+    const rLabel = document.createElement('span');
+    rLabel.className = 'row-label';
+    rLabel.contentEditable = 'true';
+    rLabel.dataset.focusKey = 'row-lbl-' + sec.id + '-' + ri;
+    rLabel.textContent = row.rowId;
+    rLabel.addEventListener('input', () => { row.rowId = rLabel.textContent; });
+    rLabel.addEventListener('blur',  () => saveHistory());
+    rLabel.addEventListener('mousedown', e => e.stopPropagation());
+
+    const seatsWrap = document.createElement('div');
+    seatsWrap.className = 'seats-wrap';
+
+    row.seats.forEach((seat, seatI) => {
+      const sBtn = document.createElement('button');
+      sBtn.className = 'seat ' + seat.type;
+      sBtn.title = row.rowId + seat.num;
+      sBtn.textContent = seat.num;
+
+      const x = document.createElement('span');
+      x.className = 'seat-x';
+      x.textContent = '×';
+      x.addEventListener('click', e => {
+        e.stopPropagation();
+        saveHistory();
+        row.seats.splice(seatI, 1);
+        render();
+      });
+      sBtn.appendChild(x);
+
+      sBtn.addEventListener('click', e => {
+        if (e.target === x) return;
+        saveHistory();
+        seat.type = seat.type === 'selected' ? 'available' : 'selected';
+        sBtn.className = 'seat ' + seat.type;
+      });
+
+      sBtn.addEventListener('contextmenu', e => {
+        e.preventDefault();
+        ctxTarget = { sec, row, seatI };
+        showCtxMenu(e.clientX, e.clientY);
+      });
+
+      seatsWrap.appendChild(sBtn);
+    });
+
+    // Add seat button
+    const addSeat = document.createElement('button');
+    addSeat.className = 'row-add-seat';
+    addSeat.title = 'Add seat';
+    addSeat.textContent = '+';
+    addSeat.addEventListener('click', () => {
+      saveHistory();
+      const last = row.seats[row.seats.length - 1];
+      const nextNum = last ? (typeof last.num === 'number' ? last.num + 1 : last.num + '+') : 1;
+      row.seats.push({ num: nextNum, type: 'available' });
+      render();
+    });
+
+    // Delete row button
+    const delRow = document.createElement('button');
+    delRow.className = 'row-del';
+    delRow.title = 'Delete row';
+    delRow.textContent = '×';
+    delRow.addEventListener('click', () => {
+      saveHistory();
+      sec.rows.splice(ri, 1);
+      render();
+    });
+
+    rowWrap.appendChild(rLabel);
+    rowWrap.appendChild(seatsWrap);
+    rowWrap.appendChild(addSeat);
+    rowWrap.appendChild(delRow);
+    body.appendChild(rowWrap);
+  });
+
+  el.appendChild(body);
+
+  // Footer
+  const footer = document.createElement('div');
+  footer.className = 'sec-footer';
+
+  const addRow = document.createElement('button');
+  addRow.className = 'sec-add-row';
+  addRow.textContent = '+ Row';
+  addRow.addEventListener('click', () => {
+    saveHistory();
+    const lastRow = sec.rows[sec.rows.length - 1];
+    const nextId  = nextRowId(lastRow ? lastRow.rowId : '');
+    const seatCount = lastRow ? lastRow.seats.length : 8;
+    const firstNum  = lastRow && lastRow.seats.length ? lastRow.seats[0].num : 1;
+    const newSeats  = Array.from({ length: seatCount }, (_, i) => ({ num: (typeof firstNum === 'number' ? firstNum + i : i + 1), type: 'available' }));
+    sec.rows.push({ rowId: nextId, seats: newSeats });
+    render();
+  });
+
+  const delSec = document.createElement('button');
+  delSec.className = 'sec-del';
+  delSec.title = 'Delete section';
+  delSec.textContent = '×';
+  delSec.addEventListener('click', () => {
+    saveHistory();
+    state.sections = state.sections.filter(s => s.id !== sec.id);
+    if (selectedId === sec.id) selectedId = null;
+    render();
+  });
+
+  footer.appendChild(addRow);
+  footer.appendChild(delSec);
+  el.appendChild(footer);
+
+  return el;
+}
+
+function nextRowId(current) {
+  if (!current) return 'A';
+  // Handle AA, BB, etc.
+  if (current.length > 1 && current[0] === current[1]) {
+    return String.fromCharCode(current.charCodeAt(0) + 1).repeat(2);
+  }
+  const code = current.charCodeAt(current.length - 1);
+  if (code >= 90) return 'AA'; // Z → AA
+  return current.slice(0, -1) + String.fromCharCode(code + 1);
+}
+
+// ─── Drag ──────────────────────────────────────────────────────────────────
+
+function startDrag(e, type, id) {
+  e.preventDefault();
+  const target = type === 'stage'
+    ? { x: state.stage.x, y: state.stage.y }
+    : { x: state.sections.find(s => s.id === id).x, y: state.sections.find(s => s.id === id).y };
+  drag = { type, id, startX: target.x, startY: target.y, startCX: e.clientX, startCY: e.clientY };
+  saveHistory();
+}
+
+document.addEventListener('mousemove', e => {
+  if (drag) {
+    const dx = (e.clientX - drag.startCX) / zoom;
+    const dy = (e.clientY - drag.startCY) / zoom;
+    const nx = drag.startX + dx;
+    const ny = drag.startY + dy;
+    if (drag.type === 'stage') {
+      state.stage.x = nx; state.stage.y = ny;
+      const el = document.getElementById('stage-el');
+      if (el) { el.style.left = nx + 'px'; el.style.top = ny + 'px'; }
+    } else {
+      const sec = state.sections.find(s => s.id === drag.id);
+      if (sec) { sec.x = nx; sec.y = ny; }
+      const el = document.querySelector('.section[data-id="' + drag.id + '"]');
+      if (el) { el.style.left = nx + 'px'; el.style.top = ny + 'px'; }
+    }
+    return;
+  }
+  if (pan) {
+    panX = pan.startPX + (e.clientX - pan.startCX);
+    panY = pan.startPY + (e.clientY - pan.startCY);
+    applyTransform();
+  }
+});
+
+document.addEventListener('mouseup', () => { drag = null; pan = null; });
+
+// Canvas pan (background click)
+document.getElementById('canvas-wrap').addEventListener('mousedown', e => {
+  if (e.target.id === 'canvas-wrap' || e.target.id === 'canvas') {
+    selectedId = null;
+    updateSelection();
+    pan = { startPX: panX, startPY: panY, startCX: e.clientX, startCY: e.clientY };
+  }
+});
+
+// Zoom via wheel
+document.getElementById('canvas-wrap').addEventListener('wheel', e => {
+  e.preventDefault();
+  zoomAt(e.deltaY < 0 ? 0.1 : -0.1, e.clientX, e.clientY);
+}, { passive: false });
+
+// ─── Context Menu ──────────────────────────────────────────────────────────
+
+function showCtxMenu(x, y) {
+  const menu = document.getElementById('ctx-menu');
+  menu.style.left = x + 'px';
+  menu.style.top  = y + 'px';
+  menu.classList.add('show');
+}
+
+document.getElementById('ctx-menu').addEventListener('click', e => {
+  const item = e.target.closest('.ctx-item');
+  if (!item || !ctxTarget) return;
+  const t = item.dataset.t;
+  document.getElementById('ctx-menu').classList.remove('show');
+  if (!t) return;
+  saveHistory();
+  if (t === '__del__') {
+    ctxTarget.row.seats.splice(ctxTarget.seatI, 1);
+  } else {
+    ctxTarget.row.seats[ctxTarget.seatI].type = t;
+  }
+  render();
+  ctxTarget = null;
+});
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#ctx-menu')) {
+    document.getElementById('ctx-menu').classList.remove('show');
+  }
+});
+
+// ─── Add Section Modal ─────────────────────────────────────────────────────
+
+document.getElementById('btn-add-sec').addEventListener('click', () => {
+  document.getElementById('m-label').value = '';
+  document.getElementById('m-rows').value  = '';
+  document.getElementById('m-seats').value = '';
+  document.getElementById('modal-bg').classList.add('show');
+  document.getElementById('m-label').focus();
+});
+
+document.getElementById('m-cancel').addEventListener('click', () =>
+  document.getElementById('modal-bg').classList.remove('show'));
+
+document.getElementById('m-ok').addEventListener('click', () => {
+  const label = document.getElementById('m-label').value.trim() || 'New Section';
+  const rowIds = document.getElementById('m-rows').value.split(',').map(r => r.trim()).filter(Boolean);
+  const seatRange = document.getElementById('m-seats').value.trim();
+  let seatNums = [];
+  if (seatRange.includes('-')) {
+    const [a, b] = seatRange.split('-').map(Number);
+    for (let i = a; i <= b; i++) seatNums.push(i);
+  } else if (seatRange) {
+    seatNums = seatRange.split(',').map(s => parseInt(s.trim())).filter(Boolean);
+  } else {
+    seatNums = Array.from({ length: 10 }, (_, i) => i + 1);
+  }
+  if (!rowIds.length) rowIds.push('A');
+  saveHistory();
+  const wrap = document.getElementById('canvas-wrap');
+  const cx = (wrap.clientWidth / 2 - panX) / zoom;
+  const cy = (wrap.clientHeight / 2 - panY) / zoom;
+  state.sections.push({
+    id: uid(), label,
+    x: cx - 100, y: cy - 50,
+    rows: rowIds.map(id => ({ rowId: id, seats: seatNums.map(n => ({ num: n, type: 'available' })) }))
+  });
+  document.getElementById('modal-bg').classList.remove('show');
+  render();
+});
+
+// ─── Toolbar Buttons ───────────────────────────────────────────────────────
+
+document.getElementById('btn-undo').addEventListener('click', undo);
+document.getElementById('btn-redo').addEventListener('click', redo);
+document.getElementById('btn-zoom-in').addEventListener('click',  () => { const wrap = document.getElementById('canvas-wrap'); zoomAt(0.15, wrap.clientWidth/2, wrap.clientHeight/2); });
+document.getElementById('btn-zoom-out').addEventListener('click', () => { const wrap = document.getElementById('canvas-wrap'); zoomAt(-0.15, wrap.clientWidth/2, wrap.clientHeight/2); });
+document.getElementById('btn-fit').addEventListener('click', fitView);
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if (e.target.isContentEditable || e.target.tagName === 'INPUT') return;
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo(); }
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.shiftKey && e.key === 'z'))) { e.preventDefault(); redo(); }
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+    if (selectedId) {
+      saveHistory();
+      state.sections = state.sections.filter(s => s.id !== selectedId);
+      selectedId = null;
+      render();
+    }
+  }
+});
+
+// ─── Export ────────────────────────────────────────────────────────────────
+
+document.getElementById('btn-export').addEventListener('click', () => {
+  const html = buildStaticHTML();
+  const blob = new Blob([html], { type: 'text/html' });
+  const a    = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'seatmap.html';
+  a.click();
+});
+
+function buildStaticHTML() {
+  const secs = state.sections.map(sec => {
+    const rowsHtml = sec.rows.map(row => {
+      const seatsHtml = row.seats.map(s =>
+        '<button class="seat ' + s.type + '" title="' + row.rowId + s.num + '">' + s.num + '</button>'
+      ).join('');
+      return '<div class="row"><span class="rl">' + row.rowId + '</span><div class="sw">' + seatsHtml + '</div><span class="rl">' + row.rowId + '</span></div>';
+    }).join('');
+    return '<div class="sec"><div class="sl">' + sec.label + '</div>' + rowsHtml + '</div>';
+  }).join('');
+
+  const stageHTML = '<div class="stage">STAGE</div>';
+  const content = state.stageAtTop
+    ? stageHTML + '<div class="map">' + secs + '</div>'
+    : '<div class="map">' + secs + '</div>' + stageHTML;
+
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Seatmap</title><style>' +
+    '*{box-sizing:border-box;margin:0;padding:0}' +
+    'body{font-family:sans-serif;background:#f8fafc;display:flex;flex-direction:column;align-items:center;padding:24px 16px}' +
+    '.stage{width:260px;height:34px;background:#1f6feb;color:#fff;text-align:center;line-height:34px;border-radius:6px;font-size:12px;letter-spacing:3px;font-weight:700;margin:0 auto 20px}' +
+    '.map{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:20px}' +
+    '.sec{display:flex;flex-direction:column;gap:2px;align-items:center}' +
+    '.sl{font-size:10px;font-weight:700;color:#555;margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em}' +
+    '.row{display:flex;align-items:center;gap:3px}' +
+    '.rl{font-size:9px;font-weight:700;color:#999;width:15px;text-align:center}' +
+    '.sw{display:flex;gap:2px}' +
+    '.seat{width:18px;height:18px;border-radius:3px;border:1px solid #ccc;background:#e8f4fd;font-size:7px;cursor:pointer;color:#333;display:flex;align-items:center;justify-content:center;transition:background .12s}' +
+    '.seat:hover{background:#3b82f6;color:#fff}' +
+    '.seat.selected{background:#1d4ed8;color:#fff;border-color:#1d4ed8}' +
+    '.seat.wheelchair{background:#fef3c7;border-color:#f59e0b}' +
+    '.seat.companion{background:#d1fae5;border-color:#10b981}' +
+    '.seat.restricted{background:#fee2e2;border-color:#ef4444;opacity:.55;cursor:not-allowed}' +
+    '</style></head><body>' + content +
+    '<script>document.querySelectorAll(".seat:not(.restricted)").forEach(b=>b.addEventListener("click",()=>b.classList.toggle("selected")));<' + '/script>' +
+    '</body></html>';
+}
+
+// ─── Helpers ───────────────────────────────────────────────────────────────
+
+function selectSection(id) {
+  selectedId = id;
+  updateSelection();
+}
+
+function updateSelection() {
+  document.querySelectorAll('.section').forEach(el => {
+    el.classList.toggle('selected', el.dataset.id === selectedId);
+  });
+}
+
+function updateToolbar() {
+  document.getElementById('btn-undo').disabled = !history.length;
+  document.getElementById('btn-redo').disabled = !future.length;
+}
+
+function placeCaretAtEnd(el) {
+  try {
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    range.collapse(false);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  } catch(_) {}
+}
+
+// ─── Boot ──────────────────────────────────────────────────────────────────
+
+render();
+setTimeout(fitView, 50);
+</script>
+</body>
+</html>
