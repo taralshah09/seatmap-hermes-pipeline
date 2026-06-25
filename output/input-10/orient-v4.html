@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Seatmap</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:sans-serif;background:#f8fafc;display:flex;flex-direction:column;align-items:center;padding:24px 16px}
+.stage{width:260px;height:34px;background:#1f6feb;color:#fff;text-align:center;line-height:34px;border-radius:6px;font-size:12px;letter-spacing:3px;font-weight:700;margin:0 auto 20px}
+.map{display:flex;gap:0px;justify-content:center;align-items:flex-start;margin-bottom:20px;width:100%;max-width:990px}
+.sec{display:flex;flex-direction:column;gap:4px;align-items:center}
+.sl{font-size:10px;font-weight:700;color:#555;margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em}
+.row{display:flex;align-items:center;gap:3px}
+.rl{font-size:9px;font-weight:700;color:#999;width:15px;text-align:center}
+.sw{display:flex;gap:2px}
+.seat{width:18px;height:18px;border-radius:3px;border:1px solid #ccc;background:#e8f4fd;font-size:7px;cursor:pointer;color:#333;display:flex;align-items:center;justify-content:center;transition:background .12s}
+.seat:hover{background:#3b82f6;color:#fff}
+.seat.selected{background:#1d4ed8;color:#fff;border-color:#1d4ed8}
+.seat.restricted{background:#fee2e2;border-color:#ef4444;opacity:.55;cursor:not-allowed}
+
+/* Center section seat colors - rows A-D red, E onwards orange */
+[data-sec="center"] .row-A .seat,
+[data-sec="center"] .row-B .seat,
+[data-sec="center"] .row-C .seat,
+[data-sec="center"] .row-D .seat{background:#f87171;border-color:#ef4444;color:#fff}
+[data-sec="center"] .row-A .seat:hover,
+[data-sec="center"] .row-B .seat:hover,
+[data-sec="center"] .row-C .seat:hover,
+[data-sec="center"] .row-D .seat:hover{background:#dc2626}
+[data-sec="center"] .row-E .seat,
+[data-sec="center"] .row-F .seat,
+[data-sec="center"] .row-G .seat,
+[data-sec="center"] .row-H .seat,
+[data-sec="center"] .row-J .seat,
+[data-sec="center"] .row-K .seat,
+[data-sec="center"] .row-L .seat{background:#fb923c;border-color:#ea580c;color:#fff}
+[data-sec="center"] .row-E .seat:hover,
+[data-sec="center"] .row-F .seat:hover,
+[data-sec="center"] .row-G .seat:hover,
+[data-sec="center"] .row-H .seat:hover,
+[data-sec="center"] .row-J .seat:hover,
+[data-sec="center"] .row-K .seat:hover,
+[data-sec="center"] .row-L .seat:hover{background:#c2410c}
+
+/* Left section seat colors by seat number position */
+/* seats 1-3: blue, 4-5: orange, 6-7: red, 8-9: blue */
+[data-sec="left"] .seat{background:#3b82f6;border-color:#1d4ed8;color:#fff}
+[data-sec="left"] .seat:hover{background:#1d4ed8}
+[data-sec="left"] .seat-orange{background:#fb923c;border-color:#ea580c;color:#fff}
+[data-sec="left"] .seat-orange:hover{background:#c2410c}
+[data-sec="left"] .seat-red{background:#f87171;border-color:#ef4444;color:#fff}
+[data-sec="left"] .seat-red:hover{background:#dc2626}
+
+/* Right section seat colors */
+[data-sec="right"] .seat{background:#3b82f6;border-color:#1d4ed8;color:#fff}
+[data-sec="right"] .seat:hover{background:#1d4ed8}
+[data-sec="right"] .seat-orange{background:#fb923c;border-color:#ea580c;color:#fff}
+[data-sec="right"] .seat-orange:hover{background:#c2410c}
+[data-sec="right"] .seat-red{background:#f87171;border-color:#ef4444;color:#fff}
+[data-sec="right"] .seat-red:hover{background:#dc2626}
+
+/* Side section rotation - reduced to gentle 6deg angle */
+[data-sec="left"]{
+  transform: rotate(6deg);
+  transform-origin: top right;
+  margin-right: -20px;
+  position: relative;
+  z-index: 1;
+}
+[data-sec="right"]{
+  transform: rotate(-6deg);
+  transform-origin: top left;
+  margin-left: -20px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Center section */
+[data-sec="center"]{
+  position: relative;
+  z-index: 2;
+}
+
+/* Center section row spacing - reduced by ~15-20% */
+[data-sec="center"] .row+.row{margin-top: 3px;}
+</style>
+<style id="orient-style">
+.map{position:relative;display:block;width:1360px;height:960px;margin:0 auto 20px;flex-wrap:nowrap;}
+.map [data-sec]{position:absolute;}
+.map .stage{margin:0;}
+[data-sec="stage"]{left:50.00%;top:4.00%;transform:translate(-50%,-50%) scale(1);}
+[data-sec="center"]{left:50.00%;top:38.00%;transform:translate(-50%,-50%) scale(1);}
+[data-sec="left"]{left:18.00%;top:50.00%;transform:translate(-50%,-50%) scale(0.85);}
+[data-sec="right"]{left:82.00%;top:50.00%;transform:translate(-50%,-50%) scale(0.85);}
+</style>
+</head>
+<body>
+
+<div class="map"><div class="stage" data-sec="stage">STAGE</div>
+
+<!-- LEFT SECTION: rotated 6deg clockwise, NO numeric row labels -->
+<div class="sec" data-sec="left">
+  <div class="sl">Left</div>
+  <!-- Top partial row: 3 seats -->
+  <div class="row row-top">
+    <div class="sw">
+      <button class="seat available" title="L-top-1">1</button>
+      <button class="seat available" title="L-top-2">2</button>
+      <button class="seat available" title="L-top-3">3</button>
+    </div>
+  </div>
+  <!-- Row 1: 3 seats -->
+  <div class="row row-1">
+    <div class="sw">
+      <button class="seat available" title="L1-1">1</button>
+      <button class="seat available" title="L1-2">2</button>
+      <button class="seat available" title="L1-3">3</button>
+    </div>
+  </div>
+  <!-- Row 2: 5 seats -->
+  <div class="row row-2">
+    <div class="sw">
+      <button class="seat available" title="L2-1">1</button>
+      <button class="seat available" title="L2-2">2</button>
+      <button class="seat available" title="L2-3">3</button>
+      <button class="seat available seat-orange" title="L2-4">4</button>
+      <button class="seat available seat-orange" title="L2-5">5</button>
+    </div>
+  </div>
+  <!-- Row 3: 7 seats -->
+  <div class="row row-3">
+    <div class="sw">
+      <button class="seat available" title="L3-1">1</button>
+      <button class="seat available" title="L3-2">2</button>
+      <button class="seat available" title="L3-3">3</button>
+      <button class="seat available seat-orange" title="L3-4">4</button>
+      <button class="seat available seat-orange" title="L3-5">5</button>
+      <button class="seat available seat-red" title="L3-6">6</button>
+      <button class="seat available seat-red" title="L3-7">7</button>
+    </div>
+  </div>
+  <!-- Row 4: 9 seats -->
+  <div class="row row-4">
+    <div class="sw">
+      <button class="seat available" title="L4-1">1</button>
+      <button class="seat available" title="L4-2">2</button>
+      <button class="seat available" title="L4-3">3</button>
+      <button class="seat available seat-orange" title="L4-4">4</button>
+      <button class="seat available seat-orange" title="L4-5">5</button>
+      <button class="seat available seat-red" title="L4-6">6</button>
+      <button class="seat available seat-red" title="L4-7">7</button>
+      <button class="seat available" title="L4-8">8</button>
+      <button class="seat available" title="L4-9">9</button>
+    </div>
+  </div>
+  <!-- Row 5: 9 seats -->
+  <div class="row row-5">
+    <div class="sw">
+      <button class="seat available" title="L5-1">1</button>
+      <button class="seat available" title="L5-2">2</button>
+      <button class="seat available" title="L5-3">3</button>
+      <button class="seat available seat-orange" title="L5-4">4</button>
+      <button class="seat available seat-orange" title="L5-5">5</button>
+      <button class="seat available seat-red" title="L5-6">6</button>
+      <button class="seat available seat-red" title="L5-7">7</button>
+      <button class="seat available" title="L5-8">8</button>
+      <button class="seat available" title="L5-9">9</button>
+    </div>
+  </div>
+  <!-- Row 6: 9 seats -->
+  <div class="row row-6">
+    <div class="sw">
+      <button class="seat available" title="L6-1">1</button>
+      <button class="seat available" title="L6-2">2</button>
+      <button class="seat available" title="L6-3">3</button>
+      <button class="seat available seat-orange" title="L6-4">4</button>
+      <button class="seat available seat-orange" title="L6-5">5</button>
+      <button class="seat available seat-red" title="L6-6">6</button>
+      <button class="seat available seat-red" title="L6-7">7</button>
+      <button class="seat available" title="L6-8">8</button>
+      <button class="seat available" title="L6-9">9</button>
+    </div>
+  </div>
+  <!-- Row 7: 9 seats -->
+  <div class="row row-7">
+    <div class="sw">
+      <button class="seat available" title="L7-1">1</button>
+      <button class="seat available" title="L7-2">2</button>
+      <button class="seat available" title="L7-3">3</button>
+      <button class="seat available seat-orange" title="L7-4">4</button>
+      <button class="seat available seat-orange" title="L7-5">5</button>
+      <button class="seat available seat-red" title="L7-6">6</button>
+      <button class="seat available seat-red" title="L7-7">7</button>
+      <button class="seat available" title="L7-8">8</button>
+      <button class="seat available" title="L7-9">9</button>
+    </div>
+  </div>
+  <!-- Row 8: 9 seats -->
+  <div class="row row-8">
+    <div class="sw">
+      <button class="seat available" title="L8-1">1</button>
+      <button class="seat available" title="L8-2">2</button>
+      <button class="seat available" title="L8-3">3</button>
+      <button class="seat available seat-orange" title="L8-4">4</button>
+      <button class="seat available seat-orange" title="L8-5">5</button>
+      <button class="seat available seat-red" title="L8-6">6</button>
+      <button class="seat available seat-red" title="L8-7">7</button>
+      <button class="seat available" title="L8-8">8</button>
+      <button class="seat available" title="L8-9">9</button>
+    </div>
+  </div>
+  <!-- Row 9: 9 seats -->
+  <div class="row row-9">
+    <div class="sw">
+      <button class="seat available" title="L9-1">1</button>
+      <button class="seat available" title="L9-2">2</button>
+      <button class="seat available" title="L9-3">3</button>
+      <button class="seat available seat-orange" title="L9-4">4</button>
+      <button class="seat available seat-orange" title="L9-5">5</button>
+      <button class="seat available seat-red" title="L9-6">6</button>
+      <button class="seat available seat-red" title="L9-7">7</button>
+      <button class="seat available" title="L9-8">8</button>
+      <button class="seat available" title="L9-9">9</button>
+    </div>
+  </div>
+  <!-- Row 10: 9 seats -->
+  <div class="row row-10">
+    <div class="sw">
+      <button class="seat available" title="L10-1">1</button>
+      <button class="seat available" title="L10-2">2</button>
+      <button class="seat available" title="L10-3">3</button>
+      <button class="seat available seat-orange" title="L10-4">4</button>
+      <button class="seat available seat-orange" title="L10-5">5</button>
+      <button class="seat available seat-red" title="L10-6">6</button>
+      <button class="seat available seat-red" title="L10-7">7</button>
+      <button class="seat available" title="L10-8">8</button>
+      <button class="seat available" title="L10-9">9</button>
+    </div>
+  </div>
+  <!-- Row 11: 9 seats -->
+  <div class="row row-11">
+    <div class="sw">
+      <button class="seat available" title="L11-1">1</button>
+      <button class="seat available" title="L11-2">2</button>
+      <button class="seat available" title="L11-3">3</button>
+      <button class="seat available seat-orange" title="L11-4">4</button>
+      <button class="seat available seat-orange" title="L11-5">5</button>
+      <button class="seat available seat-red" title="L11-6">6</button>
+      <button class="seat available seat-red" title="L11-7">7</button>
+      <button class="seat available" title="L11-8">8</button>
+      <button class="seat available" title="L11-9">9</button>
+    </div>
+  </div>
+  <!-- Row 12: 8 seats -->
+  <div class="row row-12">
+    <div class="sw">
+      <button class="seat available" title="L12-1">1</button>
+      <button class="seat available" title="L12-2">2</button>
+      <button class="seat available" title="L12-3">3</button>
+      <button class="seat available seat-orange" title="L12-4">4</button>
+      <button class="seat available seat-orange" title="L12-5">5</button>
+      <button class="seat available seat-red" title="L12-6">6</button>
+      <button class="seat available seat-red" title="L12-7">7</button>
+      <button class="seat available" title="L12-8">8</button>
+    </div>
+  </div>
+  <!-- Row 13: 8 seats -->
+  <div class="row row-13">
+    <div class="sw">
+      <button class="seat available" title="L13-1">1</button>
+      <button class="seat available" title="L13-2">2</button>
+      <button class="seat available" title="L13-3">3</button>
+      <button class="seat available seat-orange" title="L13-4">4</button>
+      <button class="seat available seat-orange" title="L13-5">5</button>
+      <button class="seat available seat-red" title="L13-6">6</button>
+      <button class="seat available seat-red" title="L13-7">7</button>
+      <button class="seat available" title="L13-8">8</button>
+    </div>
+  </div>
+</div>
+
+<!-- CENTER SECTION -->
+<div class="sec" data-sec="center">
+  <div class="sl">Center</div>
+  <!-- Row A: seats 8-15 (8 seats) - RED/premium -->
+  <div class="row row-A">
+    <span class="rl">A</span>
+    <div class="sw">
+      <button class="seat available" title="A8">8</button>
+      <button class="seat available" title="A9">9</button>
+      <button class="seat available" title="A10">10</button>
+      <button class="seat available" title="A11">11</button>
+      <button class="seat available" title="A12">12</button>
+      <button class="seat available" title="A13">13</button>
+      <button class="seat available" title="A14">14</button>
+      <button class="seat available" title="A15">15</button>
+    </div>
+    <span class="rl">A</span>
+  </div>
+  <!-- Row B: seats 9-17 (9 seats) - RED/premium -->
+  <div class="row row-B">
+    <span class="rl">B</span>
+    <div class="sw">
+      <button class="seat available" title="B9">9</button>
+      <button class="seat available" title="B10">10</button>
+      <button class="seat available" title="B11">11</button>
+      <button class="seat available" title="B12">12</button>
+      <button class="seat available" title="B13">13</button>
+      <button class="seat available" title="B14">14</button>
+      <button class="seat available" title="B15">15</button>
+      <button class="seat available" title="B16">16</button>
+      <button class="seat available" title="B17">17</button>
+    </div>
+    <span class="rl">B</span>
+  </div>
+  <!-- Row C: seats 9-18 (10 seats) - RED/premium -->
+  <div class="row row-C">
+    <span class="rl">C</span>
+    <div class="sw">
+      <button class="seat available" title="C9">9</button>
+      <button class="seat available" title="C10">10</button>
+      <button class="seat available" title="C11">11</button>
+      <button class="seat available" title="C12">12</button>
+      <button class="seat available" title="C13">13</button>
+      <button class="seat available" title="C14">14</button>
+      <button class="seat available" title="C15">15</button>
+      <button class="seat available" title="C16">16</button>
+      <button class="seat available" title="C17">17</button>
+      <button class="seat available" title="C18">18</button>
+    </div>
+    <span class="rl">C</span>
+  </div>
+  <!-- Row D: seats 10-20 (11 seats) - RED/premium -->
+  <div class="row row-D">
+    <span class="rl">D</span>
+    <div class="sw">
+      <button class="seat available" title="D10">10</button>
+      <button class="seat available" title="D11">11</button>
+      <button class="seat available" title="D12">12</button>
+      <button class="seat available" title="D13">13</button>
+      <button class="seat available" title="D14">14</button>
+      <button class="seat available" title="D15">15</button>
+      <button class="seat available" title="D16">16</button>
+      <button class="seat available" title="D17">17</button>
+      <button class="seat available" title="D18">18</button>
+      <button class="seat available" title="D19">19</button>
+      <button class="seat available" title="D20">20</button>
+    </div>
+    <span class="rl">D</span>
+  </div>
+  <!-- Row E: seats 10-20 (11 seats) - ORANGE/standard -->
+  <div class="row row-E">
+    <span class="rl">E</span>
+    <div class="sw">
+      <button class="seat available" title="E10">10</button>
+      <button class="seat available" title="E11">11</button>
+      <button class="seat available" title="E12">12</button>
+      <button class="seat available" title="E13">13</button>
+      <button class="seat available" title="E14">14</button>
+      <button class="seat available" title="E15">15</button>
+      <button class="seat available" title="E16">16</button>
+      <button class="seat available" title="E17">17</button>
+      <button class="seat available" title="E18">18</button>
+      <button class="seat available" title="E19">19</button>
+      <button class="seat available" title="E20">20</button>
+    </div>
+    <span class="rl">E</span>
+  </div>
+  <!-- Row F: seats 10-21 (12 seats) - ORANGE/standard -->
+  <div class="row row-F">
+    <span class="rl">F</span>
+    <div class="sw">
+      <button class="seat available" title="F10">10</button>
+      <button class="seat available" title="F11">11</button>
+      <button class="seat available" title="F12">12</button>
+      <button class="seat available" title="F13">13</button>
+      <button class="seat available" title="F14">14</button>
+      <button class="seat available" title="F15">15</button>
+      <button class="seat available" title="F16">16</button>
+      <button class="seat available" title="F17">17</button>
+      <button class="seat available" title="F18">18</button>
+      <button class="seat available" title="F19">19</button>
+      <button class="seat available" title="F20">20</button>
+      <button class="seat available" title="F21">21</button>
+    </div>
+    <span class="rl">F</span>
+  </div>
+  <!-- Row G: seats 10-21 (12 seats) - ORANGE/standard -->
+  <div class="row row-G">
+    <span class="rl">G</span>
+    <div class="sw">
+      <button class="seat available" title="G10">10</button>
+      <button class="seat available" title="G11">11</button>
+      <button class="seat available" title="G12">12</button>
+      <button class="seat available" title="G13">13</button>
+      <button class="seat available" title="G14">14</button>
+      <button class="seat available" title="G15">15</button>
+      <button class="seat available" title="G16">16</button>
+      <button class="seat available" title="G17">17</button>
+      <button class="seat available" title="G18">18</button>
+      <button class="seat available" title="G19">19</button>
+      <button class="seat available" title="G20">20</button>
+      <button class="seat available" title="G21">21</button>
+    </div>
+    <span class="rl">G</span>
+  </div>
+  <!-- Row H: seats 10-22 (13 seats) - ORANGE/standard -->
+  <div class="row row-H">
+    <span class="rl">H</span>
+    <div class="sw">
+      <button class="seat available" title="H10">10</button>
+      <button class="seat available" title="H11">11</button>
+      <button class="seat available" title="H12">12</button>
+      <button class="seat available" title="H13">13</button>
+      <button class="seat available" title="H14">14</button>
+      <button class="seat available" title="H15">15</button>
+      <button class="seat available" title="H16">16</button>
+      <button class="seat available" title="H17">17</button>
+      <button class="seat available" title="H18">18</button>
+      <button class="seat available" title="H19">19</button>
+      <button class="seat available" title="H20">20</button>
+      <button class="seat available" title="H21">21</button>
+      <button class="seat available" title="H22">22</button>
+    </div>
+    <span class="rl">H</span>
+  </div>
+  <!-- Row J: seats 9-22 (14 seats) - ORANGE/standard -->
+  <div class="row row-J">
+    <span class="rl">J</span>
+    <div class="sw">
+      <button class="seat available" title="J9">9</button>
+      <button class="seat available" title="J10">10</button>
+      <button class="seat available" title="J11">11</button>
+      <button class="seat available" title="J12">12</button>
+      <button class="seat available" title="J13">13</button>
+      <button class="seat available" title="J14">14</button>
+      <button class="seat available" title="J15">15</button>
+      <button class="seat available" title="J16">16</button>
+      <button class="seat available" title="J17">17</button>
+      <button class="seat available" title="J18">18</button>
+      <button class="seat available" title="J19">19</button>
+      <button class="seat available" title="J20">20</button>
+      <button class="seat available" title="J21">21</button>
+      <button class="seat available" title="J22">22</button>
+    </div>
+    <span class="rl">J</span>
+  </div>
+  <!-- Row K: seats 9-22 (14 seats) - ORANGE/standard -->
+  <div class="row row-K">
+    <span class="rl">K</span>
+    <div class="sw">
+      <button class="seat available" title="K9">9</button>
+      <button class="seat available" title="K10">10</button>
+      <button class="seat available" title="K11">11</button>
+      <button class="seat available" title="K12">12</button>
+      <button class="seat available" title="K13">13</button>
+      <button class="seat available" title="K14">14</button>
+      <button class="seat available" title="K15">15</button>
+      <button class="seat available" title="K16">16</button>
+      <button class="seat available" title="K17">17</button>
+      <button class="seat available" title="K18">18</button>
+      <button class="seat available" title="K19">19</button>
+      <button class="seat available" title="K20">20</button>
+      <button class="seat available" title="K21">21</button>
+      <button class="seat available" title="K22">22</button>
+    </div>
+    <span class="rl">K</span>
+  </div>
+  <!-- Row L: seats 4-18 (15 seats) - ORANGE/standard -->
+  <div class="row row-L">
+    <span class="rl">L</span>
+    <div class="sw">
+      <button class="seat available" title="L4">4</button>
+      <button class="seat available" title="L5">5</button>
+      <button class="seat available" title="L6">6</button>
+      <button class="seat available" title="L7">7</button>
+      <button class="seat available" title="L8">8</button>
+      <button class="seat available" title="L9">9</button>
+      <button class="seat available" title="L10">10</button>
+      <button class="seat available" title="L11">11</button>
+      <button class="seat available" title="L12">12</button>
+      <button class="seat available" title="L13">13</button>
+      <button class="seat available" title="L14">14</button>
+      <button class="seat available" title="L15">15</button>
+      <button class="seat available" title="L16">16</button>
+      <button class="seat available" title="L17">17</button>
+      <button class="seat available" title="L18">18</button>
+    </div>
+    <span class="rl">L</span>
+  </div>
+</div>
+
+<!-- RIGHT SECTION: rotated -6deg, NO duplicate outer row labels, seats with color coding -->
+<div class="sec" data-sec="right">
+  <div class="sl">Right</div>
+  <!-- Top partial row: seats 20,21,22 -->
+  <div class="row row-top">
+    <div class="sw">
+      <button class="seat available seat-orange" title="R-top-20">20</button>
+      <button class="seat available seat-orange" title="R-top-21">21</button>
+      <button class="seat available seat-orange" title="R-top-22">22</button>
+    </div>
+  </div>
+  <!-- Row A: seats 16-25 (10 seats) -->
+  <div class="row row-A">
+    <span class="rl">A</span>
+    <div class="sw">
+      <button class="seat available seat-red" title="RA16">16</button>
+      <button class="seat available seat-red" title="RA17">17</button>
+      <button class="seat available seat-red" title="RA18">18</button>
+      <button class="seat available seat-orange" title="RA19">19</button>
+      <button class="seat available seat-orange" title="RA20">20</button>
+      <button class="seat available seat-orange" title="RA21">21</button>
+      <button class="seat available seat-orange" title="RA22">22</button>
+      <button class="seat available" title="RA23">23</button>
+      <button class="seat available" title="RA24">24</button>
+      <button class="seat available" title="RA25">25</button>
+    </div>
+  </div>
+  <!-- Row B: seats 18-29 (12 seats) -->
+  <div class="row row-B">
+    <span class="rl">B</span>
+    <div class="sw">
+      <button class="seat available seat-red" title="RB18">18</button>
+      <button class="seat available seat-orange" title="RB19">19</button>
+      <button class="seat available seat-orange" title="RB20">20</button>
+      <button class="seat available seat-orange" title="RB21">21</button>
+      <button class="seat available seat-orange" title="RB22">22</button>
+      <button class="seat available" title="RB23">23</button>
+      <button class="seat available" title="RB24">24</button>
+      <button class="seat available" title="RB25">25</button>
+      <button class="seat available" title="RB26">26</button>
+      <button class="seat available" title="RB27">27</button>
+      <button class="seat available" title="RB28">28</button>
+      <button class="seat available" title="RB29">29</button>
+    </div>
+  </div>
+  <!-- Row C: seats 19-29 (11 seats) -->
+  <div class="row row-C">
+    <span class="rl">C</span>
+    <div class="sw">
+      <button class="seat available seat-orange" title="RC19">19</button>
+      <button class="seat available seat-orange" title="RC20">20</button>
+      <button class="seat available seat-orange" title="RC21">21</button>
+      <button class="seat available seat-orange" title="RC22">22</button>
+      <button class="seat available" title="RC23">23</button>
+      <button class="seat available" title="RC24">24</button>
+      <button class="seat available" title="RC25">25</button>
+      <button class="seat available" title="RC26">26</button>
+      <button class="seat available" title="RC27">27</button>
+      <button class="seat available" title="RC28">28</button>
+      <button class="seat available" title="RC29">29</button>
+    </div>
+  </div>
+  <!-- Row D: seats 21-30 (10 seats) -->
+  <div class="row row-D">
+    <span class="rl">D</span>
+    <div class="sw">
+      <button class="seat available seat-orange" title="RD21">21</button>
+      <button class="seat available seat-orange" title="RD22">22</button>
+      <button class="seat available" title="RD23">23</button>
+      <button class="seat available" title="RD24">24</button>
+      <button class="seat available" title="RD25">25</button>
+      <button class="seat available" title="RD26">26</button>
+      <button class="seat available" title="RD27">27</button>
+      <button class="seat available" title="RD28">28</button>
+      <button class="seat available" title="RD29">29</button>
+      <button class="seat available" title="RD30">30</button>
+    </div>
+  </div>
+  <!-- Row E: seats 21-30 (10 seats) -->
+  <div class="row row-E">
+    <span class="rl">E</span>
+    <div class="sw">
+      <button class="seat available seat-orange" title="RE21">21</button>
+      <button class="seat available seat-orange" title="RE22">22</button>
+      <button class="seat available" title="RE23">23</button>
+      <button class="seat available" title="RE24">24</button>
+      <button class="seat available" title="RE25">25</button>
+      <button class="seat available" title="RE26">26</button>
+      <button class="seat available" title="RE27">27</button>
+      <button class="seat available" title="RE28">28</button>
+      <button class="seat available" title="RE29">29</button>
+      <button class="seat available" title="RE30">30</button>
+    </div>
+  </div>
+  <!-- Row F: seats 22-31 (10 seats) -->
+  <div class="row row-F">
+    <span class="rl">F</span>
+    <div class="sw">
+      <button class="seat available seat-orange" title="RF22">22</button>
+      <button class="seat available" title="RF23">23</button>
+      <button class="seat available" title="RF24">24</button>
+      <button class="seat available" title="RF25">25</button>
+      <button class="seat available" title="RF26">26</button>
+      <button class="seat available" title="RF27">27</button>
+      <button class="seat available" title="RF28">28</button>
+      <button class="seat available" title="RF29">29</button>
+      <button class="seat available" title="RF30">30</button>
+      <button class="seat available" title="RF31">31</button>
+    </div>
+  </div>
+  <!-- Row G: seats 22-30 (9 seats) -->
+  <div class="row row-G">
+    <span class="rl">G</span>
+    <div class="sw">
+      <button class="seat available seat-orange" title="RG22">22</button>
+      <button class="seat available" title="RG23">23</button>
+      <button class="seat available" title="RG24">24</button>
+      <button class="seat available" title="RG25">25</button>
+      <button class="seat available" title="RG26">26</button>
+      <button class="seat available" title="RG27">27</button>
+      <button class="seat available" title="RG28">28</button>
+      <button class="seat available" title="RG29">29</button>
+      <button class="seat available" title="RG30">30</button>
+    </div>
+  </div>
+  <!-- Row H: seats 23-30 (8 seats) -->
+  <div class="row row-H">
+    <span class="rl">H</span>
+    <div class="sw">
+      <button class="seat available" title="RH23">23</button>
+      <button class="seat available" title="RH24">24</button>
+      <button class="seat available" title="RH25">25</button>
+      <button class="seat available" title="RH26">26</button>
+      <button class="seat available" title="RH27">27</button>
+      <button class="seat available" title="RH28">28</button>
+      <button class="seat available" title="RH29">29</button>
+      <button class="seat available" title="RH30">30</button>
+    </div>
+  </div>
+  <!-- Row J: seats 23-30 (8 seats) -->
+  <div class="row row-J">
+    <span class="rl">J</span>
+    <div class="sw">
+      <button class="seat available" title="RJ23">23</button>
+      <button class="seat available" title="RJ24">24</button>
+      <button class="seat available" title="RJ25">25</button>
+      <button class="seat available" title="RJ26">26</button>
+      <button class="seat available" title="RJ27">27</button>
+      <button class="seat available" title="RJ28">28</button>
+      <button class="seat available" title="RJ29">29</button>
+      <button class="seat available" title="RJ30">30</button>
+    </div>
+  </div>
+  <!-- Row K: seats 23-30 (8 seats) -->
+  <div class="row row-K">
+    <span class="rl">K</span>
+    <div class="sw">
+      <button class="seat available" title="RK23">23</button>
+      <button class="seat available" title="RK24">24</button>
+      <button class="seat available" title="RK25">25</button>
+      <button class="seat available" title="RK26">26</button>
+      <button class="seat available" title="RK27">27</button>
+      <button class="seat available" title="RK28">28</button>
+      <button class="seat available" title="RK29">29</button>
+      <button class="seat available" title="RK30">30</button>
+    </div>
+  </div>
+</div>
+
+</div>
+<script>document.querySelectorAll(".seat:not(.restricted)").forEach(b=>b.addEventListener("click",()=>b.classList.toggle("selected")));</script>
+</body>
+</html>

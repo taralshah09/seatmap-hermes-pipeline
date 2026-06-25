@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Seatmap</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:sans-serif;background:#f8fafc;display:flex;flex-direction:column;align-items:center;padding:24px 16px}
+.stage{width:320px;height:38px;background:#1f6feb;color:#fff;text-align:center;line-height:38px;border-radius:0 0 60% 60% / 0 0 30px 30px;font-size:12px;letter-spacing:3px;font-weight:700;margin:0 auto 28px}
+.map{display:flex;gap:4px;justify-content:center;align-items:flex-start;margin-bottom:20px;position:relative}
+.sec{display:flex;flex-direction:column;gap:2px;align-items:center}
+.sl{font-size:10px;font-weight:700;color:#555;margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em}
+.row{display:flex;align-items:center;gap:3px}
+.rl{font-size:9px;font-weight:700;color:#999;width:15px;text-align:center}
+.sw{display:flex;gap:2px}
+.seat{width:18px;height:18px;border-radius:3px;border:1px solid #ccc;background:#e8f4fd;font-size:7px;cursor:pointer;color:#333;display:flex;align-items:center;justify-content:center;transition:background .12s}
+.seat:hover{background:#3b82f6;color:#fff}
+.seat.selected{background:#1d4ed8;color:#fff;border-color:#1d4ed8}
+.seat.restricted{background:#fee2e2;border-color:#ef4444;opacity:.55;cursor:not-allowed}
+
+/* Color tiers */
+.seat.premium{background:#ffd6d6;border-color:#e05555;}
+.seat.premium:hover{background:#e05555;color:#fff;}
+.seat.mid{background:#ffe8cc;border-color:#e07820;}
+.seat.mid:hover{background:#e07820;color:#fff;}
+.seat.standard{background:#cce8ff;border-color:#3b82f6;}
+.seat.standard:hover{background:#3b82f6;color:#fff;}
+
+/* Left section rotated counter-clockwise ~20deg, anchored top-right */
+.sec[data-sec="left"]{
+  transform: rotate(-20deg);
+  transform-origin: top right;
+  margin-right: -10px;
+}
+
+/* Right section rotated clockwise ~20deg, anchored top-left */
+.sec[data-sec="right"]{
+  transform: rotate(20deg);
+  transform-origin: top left;
+  margin-left: -10px;
+}
+
+/* Center section rows curved toward stage using border-radius on sw */
+.sec[data-sec="center"] .sw{
+  position:relative;
+}
+.sec[data-sec="center"] .row{
+  justify-content:center;
+}
+/* Arc effect: each row bows slightly upward toward stage via margin adjustments */
+.sec[data-sec="center"] .row:nth-child(2) .sw{ margin-top: 0px; border-radius: 50% 50% 0 0 / 8px 8px 0 0; }
+.sec[data-sec="center"] .row:nth-child(3) .sw{ margin-top: 1px; }
+.sec[data-sec="center"] .row:nth-child(4) .sw{ margin-top: 1px; }
+.sec[data-sec="center"] .row:nth-child(5) .sw{ margin-top: 2px; }
+.sec[data-sec="center"] .row:nth-child(6) .sw{ margin-top: 2px; }
+.sec[data-sec="center"] .row:nth-child(7) .sw{ margin-top: 2px; }
+.sec[data-sec="center"] .row:nth-child(8) .sw{ margin-top: 3px; }
+.sec[data-sec="center"] .row:nth-child(9) .sw{ margin-top: 3px; }
+.sec[data-sec="center"] .row:nth-child(10) .sw{ margin-top: 3px; }
+.sec[data-sec="center"] .row:nth-child(11) .sw{ margin-top: 4px; }
+.sec[data-sec="center"] .row:nth-child(12) .sw{ margin-top: 4px; }
+</style>
+<style id="orient-style">
+.map{position:relative;display:block;width:1360px;height:960px;margin:0 auto 20px;flex-wrap:nowrap;}
+.map [data-sec]{position:absolute;}
+.map .stage{margin:0;}
+[data-sec="stage"]{left:50.00%;top:4.00%;transform:translate(-50%,-50%) scale(1);}
+[data-sec="center"]{left:50.00%;top:42.00%;transform:translate(-50%,-50%) scale(1);}
+[data-sec="left"]{left:18.00%;top:52.00%;transform:translate(-50%,-50%) scale(0.8);}
+[data-sec="right"]{left:82.00%;top:52.00%;transform:translate(-50%,-50%) scale(0.8);}
+</style>
+</head>
+<body>
+
+<div class="map"><div class="stage" data-sec="stage">STAGE</div>
+
+<!-- LEFT SECTION (rotated ~20deg CCW, transform-origin top-right) -->
+<div class="sec" data-sec="left">
+  <div class="sl">Left</div>
+  <div class="row"><span class="rl">A</span><div class="sw"><button class="seat mid" title="LA1">1</button><button class="seat mid" title="LA2">2</button><button class="seat mid" title="LA3">3</button></div><span class="rl">A</span></div>
+  <div class="row"><span class="rl">B</span><div class="sw"><button class="seat mid" title="LB1">1</button><button class="seat mid" title="LB2">2</button><button class="seat mid" title="LB3">3</button><button class="seat mid" title="LB4">4</button><button class="seat mid" title="LB5">5</button></div><span class="rl">B</span></div>
+  <div class="row"><span class="rl">C</span><div class="sw"><button class="seat mid" title="LC1">1</button><button class="seat mid" title="LC2">2</button><button class="seat mid" title="LC3">3</button><button class="seat mid" title="LC4">4</button><button class="seat mid" title="LC5">5</button><button class="seat mid" title="LC6">6</button></div><span class="rl">C</span></div>
+  <div class="row"><span class="rl">D</span><div class="sw"><button class="seat mid" title="LD1">1</button><button class="seat mid" title="LD2">2</button><button class="seat mid" title="LD3">3</button><button class="seat mid" title="LD4">4</button><button class="seat mid" title="LD5">5</button><button class="seat mid" title="LD6">6</button><button class="seat mid" title="LD7">7</button><button class="seat mid" title="LD8">8</button><button class="seat mid" title="LD9">9</button></div><span class="rl">D</span></div>
+  <div class="row"><span class="rl">E</span><div class="sw"><button class="seat mid" title="LE1">1</button><button class="seat mid" title="LE2">2</button><button class="seat mid" title="LE3">3</button><button class="seat mid" title="LE4">4</button><button class="seat mid" title="LE5">5</button><button class="seat mid" title="LE6">6</button><button class="seat mid" title="LE7">7</button><button class="seat mid" title="LE8">8</button><button class="seat mid" title="LE9">9</button></div><span class="rl">E</span></div>
+  <div class="row"><span class="rl">F</span><div class="sw"><button class="seat standard" title="LF1">1</button><button class="seat standard" title="LF2">2</button><button class="seat standard" title="LF3">3</button><button class="seat standard" title="LF4">4</button><button class="seat standard" title="LF5">5</button><button class="seat standard" title="LF6">6</button><button class="seat standard" title="LF7">7</button><button class="seat standard" title="LF8">8</button><button class="seat standard" title="LF9">9</button></div><span class="rl">F</span></div>
+  <div class="row"><span class="rl">G</span><div class="sw"><button class="seat standard" title="LG1">1</button><button class="seat standard" title="LG2">2</button><button class="seat standard" title="LG3">3</button><button class="seat standard" title="LG4">4</button><button class="seat standard" title="LG5">5</button><button class="seat standard" title="LG6">6</button><button class="seat standard" title="LG7">7</button><button class="seat standard" title="LG8">8</button><button class="seat standard" title="LG9">9</button></div><span class="rl">G</span></div>
+  <div class="row"><span class="rl">H</span><div class="sw"><button class="seat standard" title="LH1">1</button><button class="seat standard" title="LH2">2</button><button class="seat standard" title="LH3">3</button><button class="seat standard" title="LH4">4</button><button class="seat standard" title="LH5">5</button><button class="seat standard" title="LH6">6</button><button class="seat standard" title="LH7">7</button><button class="seat standard" title="LH8">8</button><button class="seat standard" title="LH9">9</button></div><span class="rl">H</span></div>
+  <div class="row"><span class="rl">J</span><div class="sw"><button class="seat standard" title="LJ1">1</button><button class="seat standard" title="LJ2">2</button><button class="seat standard" title="LJ3">3</button><button class="seat standard" title="LJ4">4</button><button class="seat standard" title="LJ5">5</button><button class="seat standard" title="LJ6">6</button><button class="seat standard" title="LJ7">7</button><button class="seat standard" title="LJ8">8</button><button class="seat standard" title="LJ9">9</button></div><span class="rl">J</span></div>
+  <div class="row"><span class="rl">K</span><div class="sw"><button class="seat standard" title="LK1">1</button><button class="seat standard" title="LK2">2</button><button class="seat standard" title="LK3">3</button><button class="seat standard" title="LK4">4</button><button class="seat standard" title="LK5">5</button><button class="seat standard" title="LK6">6</button><button class="seat standard" title="LK7">7</button><button class="seat standard" title="LK8">8</button><button class="seat standard" title="LK9">9</button></div><span class="rl">K</span></div>
+  <div class="row"><span class="rl">L</span><div class="sw"><button class="seat standard" title="LL1">1</button><button class="seat standard" title="LL2">2</button><button class="seat standard" title="LL3">3</button><button class="seat standard" title="LL4">4</button><button class="seat standard" title="LL5">5</button><button class="seat standard" title="LL6">6</button><button class="seat standard" title="LL7">7</button><button class="seat standard" title="LL8">8</button></div><span class="rl">L</span></div>
+</div>
+
+<!-- CENTER SECTION -->
+<div class="sec" data-sec="center">
+  <div class="sl">Center</div>
+  <div class="row"><span class="rl">A</span><div class="sw"><button class="seat premium" title="A8">8</button><button class="seat premium" title="A9">9</button><button class="seat premium" title="A10">10</button><button class="seat premium" title="A11">11</button><button class="seat premium" title="A12">12</button><button class="seat premium" title="A13">13</button><button class="seat premium" title="A14">14</button><button class="seat premium" title="A15">15</button></div><span class="rl">A</span></div>
+  <div class="row"><span class="rl">B</span><div class="sw"><button class="seat premium" title="B9">9</button><button class="seat premium" title="B10">10</button><button class="seat premium" title="B11">11</button><button class="seat premium" title="B12">12</button><button class="seat premium" title="B13">13</button><button class="seat premium" title="B14">14</button><button class="seat premium" title="B15">15</button><button class="seat premium" title="B16">16</button><button class="seat premium" title="B17">17</button></div><span class="rl">B</span></div>
+  <div class="row"><span class="rl">C</span><div class="sw"><button class="seat premium" title="C9">9</button><button class="seat premium" title="C10">10</button><button class="seat premium" title="C11">11</button><button class="seat premium" title="C12">12</button><button class="seat premium" title="C13">13</button><button class="seat premium" title="C14">14</button><button class="seat premium" title="C15">15</button><button class="seat premium" title="C16">16</button><button class="seat premium" title="C17">17</button><button class="seat premium" title="C18">18</button></div><span class="rl">C</span></div>
+  <div class="row"><span class="rl">D</span><div class="sw"><button class="seat premium" title="D10">10</button><button class="seat premium" title="D11">11</button><button class="seat premium" title="D12">12</button><button class="seat premium" title="D13">13</button><button class="seat premium" title="D14">14</button><button class="seat premium" title="D15">15</button><button class="seat premium" title="D16">16</button><button class="seat premium" title="D17">17</button><button class="seat premium" title="D18">18</button><button class="seat premium" title="D19">19</button><button class="seat premium" title="D20">20</button></div><span class="rl">D</span></div>
+  <div class="row"><span class="rl">E</span><div class="sw"><button class="seat mid" title="E10">10</button><button class="seat mid" title="E11">11</button><button class="seat mid" title="E12">12</button><button class="seat mid" title="E13">13</button><button class="seat mid" title="E14">14</button><button class="seat mid" title="E15">15</button><button class="seat mid" title="E16">16</button><button class="seat mid" title="E17">17</button><button class="seat mid" title="E18">18</button><button class="seat mid" title="E19">19</button><button class="seat mid" title="E20">20</button></div><span class="rl">E</span></div>
+  <div class="row"><span class="rl">F</span><div class="sw"><button class="seat mid" title="F10">10</button><button class="seat mid" title="F11">11</button><button class="seat mid" title="F12">12</button><button class="seat mid" title="F13">13</button><button class="seat mid" title="F14">14</button><button class="seat mid" title="F15">15</button><button class="seat mid" title="F16">16</button><button class="seat mid" title="F17">17</button><button class="seat mid" title="F18">18</button><button class="seat mid" title="F19">19</button><button class="seat mid" title="F20">20</button><button class="seat mid" title="F21">21</button></div><span class="rl">F</span></div>
+  <div class="row"><span class="rl">G</span><div class="sw"><button class="seat mid" title="G10">10</button><button class="seat mid" title="G11">11</button><button class="seat mid" title="G12">12</button><button class="seat mid" title="G13">13</button><button class="seat mid" title="G14">14</button><button class="seat mid" title="G15">15</button><button class="seat mid" title="G16">16</button><button class="seat mid" title="G17">17</button><button class="seat mid" title="G18">18</button><button class="seat mid" title="G19">19</button><button class="seat mid" title="G20">20</button><button class="seat mid" title="G21">21</button></div><span class="rl">G</span></div>
+  <div class="row"><span class="rl">H</span><div class="sw"><button class="seat mid" title="H10">10</button><button class="seat mid" title="H11">11</button><button class="seat mid" title="H12">12</button><button class="seat mid" title="H13">13</button><button class="seat mid" title="H14">14</button><button class="seat mid" title="H15">15</button><button class="seat mid" title="H16">16</button><button class="seat mid" title="H17">17</button><button class="seat mid" title="H18">18</button><button class="seat mid" title="H19">19</button><button class="seat mid" title="H20">20</button><button class="seat mid" title="H21">21</button><button class="seat mid" title="H22">22</button></div><span class="rl">H</span></div>
+  <div class="row"><span class="rl">J</span><div class="sw"><button class="seat standard" title="J9">9</button><button class="seat standard" title="J10">10</button><button class="seat standard" title="J11">11</button><button class="seat standard" title="J12">12</button><button class="seat standard" title="J13">13</button><button class="seat standard" title="J14">14</button><button class="seat standard" title="J15">15</button><button class="seat standard" title="J16">16</button><button class="seat standard" title="J17">17</button><button class="seat standard" title="J18">18</button><button class="seat standard" title="J19">19</button><button class="seat standard" title="J20">20</button><button class="seat standard" title="J21">21</button><button class="seat standard" title="J22">22</button></div><span class="rl">J</span></div>
+  <div class="row"><span class="rl">K</span><div class="sw"><button class="seat standard" title="K9">9</button><button class="seat standard" title="K10">10</button><button class="seat standard" title="K11">11</button><button class="seat standard" title="K12">12</button><button class="seat standard" title="K13">13</button><button class="seat standard" title="K14">14</button><button class="seat standard" title="K15">15</button><button class="seat standard" title="K16">16</button><button class="seat standard" title="K17">17</button><button class="seat standard" title="K18">18</button><button class="seat standard" title="K19">19</button><button class="seat standard" title="K20">20</button><button class="seat standard" title="K21">21</button><button class="seat standard" title="K22">22</button></div><span class="rl">K</span></div>
+  <div class="row"><span class="rl">L</span><div class="sw"><button class="seat standard" title="L4">4</button><button class="seat standard" title="L5">5</button><button class="seat standard" title="L6">6</button><button class="seat standard" title="L7">7</button><button class="seat standard" title="L8">8</button><button class="seat standard" title="L9">9</button><button class="seat standard" title="L10">10</button><button class="seat standard" title="L11">11</button><button class="seat standard" title="L12">12</button><button class="seat standard" title="L13">13</button><button class="seat standard" title="L14">14</button><button class="seat standard" title="L15">15</button><button class="seat standard" title="L16">16</button><button class="seat standard" title="L17">17</button><button class="seat standard" title="L18">18</button></div><span class="rl">L</span></div>
+</div>
+
+<!-- RIGHT SECTION (rotated ~20deg CW, transform-origin top-left) -->
+<div class="sec" data-sec="right">
+  <div class="sl">Right</div>
+  <div class="row"><span class="rl">A</span><div class="sw"><button class="seat mid" title="RA16">16</button><button class="seat mid" title="RA17">17</button><button class="seat mid" title="RA18">18</button><button class="seat mid" title="RA19">19</button><button class="seat mid" title="RA20">20</button><button class="seat mid" title="RA21">21</button><button class="seat mid" title="RA22">22</button><button class="seat mid" title="RA23">23</button><button class="seat mid" title="RA24">24</button><button class="seat mid" title="RA25">25</button></div><span class="rl">A</span></div>
+  <div class="row"><span class="rl">B</span><div class="sw"><button class="seat mid" title="RB18">18</button><button class="seat mid" title="RB19">19</button><button class="seat mid" title="RB20">20</button><button class="seat mid" title="RB21">21</button><button class="seat mid" title="RB22">22</button><button class="seat mid" title="RB23">23</button><button class="seat mid" title="RB24">24</button><button class="seat mid" title="RB25">25</button><button class="seat mid" title="RB26">26</button><button class="seat mid" title="RB27">27</button><button class="seat mid" title="RB28">28</button><button class="seat mid" title="RB29">29</button></div><span class="rl">B</span></div>
+  <div class="row"><span class="rl">C</span><div class="sw"><button class="seat mid" title="RC18">18</button><button class="seat mid" title="RC19">19</button><button class="seat mid" title="RC20">20</button><button class="seat mid" title="RC21">21</button><button class="seat mid" title="RC22">22</button><button class="seat mid" title="RC23">23</button><button class="seat mid" title="RC24">24</button><button class="seat mid" title="RC25">25</button><button class="seat mid" title="RC26">26</button></div><span class="rl">C</span></div>
+  <div class="row"><span class="rl">D</span><div class="sw"><button class="seat mid" title="RD19">19</button><button class="seat mid" title="RD20">20</button><button class="seat mid" title="RD21">21</button><button class="seat mid" title="RD22">22</button><button class="seat mid" title="RD23">23</button><button class="seat mid" title="RD24">24</button><button class="seat mid" title="RD25">25</button><button class="seat mid" title="RD26">26</button><button class="seat mid" title="RD27">27</button><button class="seat mid" title="RD28">28</button><button class="seat mid" title="RD29">29</button></div><span class="rl">D</span></div>
+  <div class="row"><span class="rl">E</span><div class="sw"><button class="seat mid" title="RE21">21</button><button class="seat mid" title="RE22">22</button><button class="seat mid" title="RE23">23</button><button class="seat mid" title="RE24">24</button><button class="seat mid" title="RE25">25</button><button class="seat mid" title="RE26">26</button><button class="seat mid" title="RE27">27</button><button class="seat mid" title="RE28">28</button><button class="seat mid" title="RE29">29</button></div><span class="rl">E</span></div>
+  <div class="row"><span class="rl">F</span><div class="sw"><button class="seat standard" title="RF22">22</button><button class="seat standard" title="RF23">23</button><button class="seat standard" title="RF24">24</button><button class="seat standard" title="RF25">25</button><button class="seat standard" title="RF26">26</button><button class="seat standard" title="RF27">27</button><button class="seat standard" title="RF28">28</button><button class="seat standard" title="RF29">29</button><button class="seat standard" title="RF30">30</button><button class="seat standard" title="RF31">31</button></div><span class="rl">F</span></div>
+  <div class="row"><span class="rl">G</span><div class="sw"><button class="seat standard" title="RG22">22</button><button class="seat standard" title="RG23">23</button><button class="seat standard" title="RG24">24</button><button class="seat standard" title="RG25">25</button><button class="seat standard" title="RG26">26</button><button class="seat standard" title="RG27">27</button><button class="seat standard" title="RG28">28</button><button class="seat standard" title="RG29">29</button><button class="seat standard" title="RG30">30</button></div><span class="rl">G</span></div>
+  <div class="row"><span class="rl">H</span><div class="sw"><button class="seat standard" title="RH22">22</button><button class="seat standard" title="RH23">23</button><button class="seat standard" title="RH24">24</button><button class="seat standard" title="RH25">25</button><button class="seat standard" title="RH26">26</button><button class="seat standard" title="RH27">27</button><button class="seat standard" title="RH28">28</button><button class="seat standard" title="RH29">29</button><button class="seat standard" title="RH30">30</button><button class="seat standard" title="RH31">31</button></div><span class="rl">H</span></div>
+  <div class="row"><span class="rl">J</span><div class="sw"><button class="seat standard" title="RJ23">23</button><button class="seat standard" title="RJ24">24</button><button class="seat standard" title="RJ25">25</button><button class="seat standard" title="RJ26">26</button><button class="seat standard" title="RJ27">27</button><button class="seat standard" title="RJ28">28</button><button class="seat standard" title="RJ29">29</button><button class="seat standard" title="RJ30">30</button></div><span class="rl">J</span></div>
+  <div class="row"><span class="rl">K</span><div class="sw"><button class="seat standard" title="RK23">23</button><button class="seat standard" title="RK24">24</button><button class="seat standard" title="RK25">25</button><button class="seat standard" title="RK26">26</button><button class="seat standard" title="RK27">27</button><button class="seat standard" title="RK28">28</button><button class="seat standard" title="RK29">29</button><button class="seat standard" title="RK30">30</button></div><span class="rl">K</span></div>
+  <div class="row"><span class="rl">L</span><div class="sw"><button class="seat standard" title="RL23">23</button><button class="seat standard" title="RL24">24</button><button class="seat standard" title="RL25">25</button><button class="seat standard" title="RL26">26</button><button class="seat standard" title="RL27">27</button><button class="seat standard" title="RL28">28</button><button class="seat standard" title="RL29">29</button></div><span class="rl">L</span></div>
+</div>
+
+</div>
+<script>document.querySelectorAll(".seat:not(.restricted)").forEach(b=>b.addEventListener("click",()=>b.classList.toggle("selected")));</script>
+</body>
+</html>

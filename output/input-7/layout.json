@@ -1,0 +1,1174 @@
+{
+  "venue": {
+    "totalSections": 5,
+    "layout": "fan",
+    "stagePosition": "bottom"
+  },
+  "sections": [
+    {
+      "id": "center",
+      "label": "Center Orchestra",
+      "angle": 0,
+      "rows": [
+        {
+          "rowId": "AA",
+          "seats": [
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "A",
+          "seats": [
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "B",
+          "seats": [
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "C",
+          "seats": [
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "D",
+          "seats": [
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "E",
+          "seats": [
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "F",
+          "seats": [
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "G",
+          "seats": [
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "H",
+          "seats": [
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "I",
+          "seats": [
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "J",
+          "seats": [
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": [
+              "U"
+            ]
+          }
+        },
+        {
+          "rowId": "K",
+          "seats": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "L",
+          "seats": [
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "M",
+          "seats": [
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "N",
+          "seats": [
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "O",
+          "seats": [
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "P",
+          "seats": [
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": [
+              "U"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "left-orchestra",
+      "label": "Left Orchestra",
+      "angle": -30,
+      "rows": [
+        {
+          "rowId": "AA",
+          "seats": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": [
+              "U"
+            ]
+          }
+        },
+        {
+          "rowId": "A",
+          "seats": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "B",
+          "seats": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "C",
+          "seats": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "D",
+          "seats": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "E",
+          "seats": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "F",
+          "seats": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "G",
+          "seats": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "H",
+          "seats": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "I",
+          "seats": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "J",
+          "seats": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "K",
+          "seats": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "L",
+          "seats": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "W",
+          "seats": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [
+              1,
+              2,
+              3,
+              4
+            ],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "right-orchestra",
+      "label": "Right Orchestra",
+      "angle": 30,
+      "rows": [
+        {
+          "rowId": "AA",
+          "seats": [
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": [
+              "U"
+            ]
+          }
+        },
+        {
+          "rowId": "A",
+          "seats": [
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "B",
+          "seats": [
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "C",
+          "seats": [
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "D",
+          "seats": [
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "E",
+          "seats": [
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "F",
+          "seats": [
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "G",
+          "seats": [
+            21,
+            22,
+            23,
+            24,
+            25,
+            26,
+            27
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "H",
+          "seats": [
+            21,
+            22,
+            23,
+            24,
+            25,
+            26
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "I",
+          "seats": [
+            21,
+            22,
+            23,
+            24,
+            25,
+            26
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "J",
+          "seats": [
+            21,
+            22,
+            23,
+            24,
+            25
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "K",
+          "seats": [
+            21,
+            22,
+            23,
+            24,
+            25
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "L",
+          "seats": [
+            16,
+            17,
+            18,
+            19
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "W",
+          "seats": [
+            5,
+            6,
+            7,
+            8
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [
+              5,
+              6,
+              7,
+              8
+            ],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "left-balcony",
+      "label": "Left Balcony",
+      "angle": -45,
+      "rows": [
+        {
+          "rowId": "K",
+          "seats": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "L",
+          "seats": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "M",
+          "seats": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "N",
+          "seats": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "O",
+          "seats": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "P",
+          "seats": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        }
+      ]
+    },
+    {
+      "id": "right-balcony",
+      "label": "Right Balcony",
+      "angle": 45,
+      "rows": [
+        {
+          "rowId": "K",
+          "seats": [
+            16,
+            17,
+            18,
+            19
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "L",
+          "seats": [
+            16,
+            17,
+            18,
+            19
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "M",
+          "seats": [
+            16,
+            17,
+            18,
+            19
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "N",
+          "seats": [
+            16,
+            17,
+            18,
+            19
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "O",
+          "seats": [
+            16,
+            17,
+            18,
+            19
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        },
+        {
+          "rowId": "P",
+          "seats": [
+            20,
+            21,
+            22,
+            23
+          ],
+          "gaps": [],
+          "special": {
+            "wheelchair": [],
+            "companion": [],
+            "restricted": [],
+            "unlabeled": []
+          }
+        }
+      ]
+    }
+  ]
+}

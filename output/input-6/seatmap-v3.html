@@ -1,0 +1,289 @@
+I'll analyze all the issues and provide the complete corrected HTML with surgical fixes applied.
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Seatmap Editor</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0d1117;color:#e6edf3;overflow:hidden;height:100vh;display:flex;flex-direction:column}
+
+/* ── Toolbar ── */
+#toolbar{height:48px;background:#161b22;border-bottom:1px solid #30363d;display:flex;align-items:center;gap:6px;padding:0 14px;flex-shrink:0;z-index:100}
+.logo{font-weight:800;font-size:13px;color:#58a6ff;margin-right:8px;letter-spacing:1px}
+.tb-sep{width:1px;height:26px;background:#30363d;margin:0 4px}
+.tb-btn{height:30px;padding:0 11px;border-radius:6px;border:1px solid #30363d;background:#21262d;color:#e6edf3;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap;transition:all .12s}
+.tb-btn:hover{background:#388bfd22;border-color:#58a6ff;color:#58a6ff}
+.tb-btn:disabled{opacity:.35;cursor:not-allowed}
+.tb-btn.danger:hover{background:#f8514922;border-color:#f85149;color:#f85149}
+#zoom-label{font-size:11px;color:#8b949e;min-width:38px;text-align:center}
+#status{margin-left:auto;font-size:11px;color:#8b949e}
+
+/* ── Canvas ── */
+#canvas-wrap{flex:1;overflow:hidden;position:relative;cursor:default;background:#0d1117;background-image:radial-gradient(circle,#1c2128 1px,transparent 1px);background-size:24px 24px}
+#canvas{position:absolute;width:4000px;height:3000px;transform-origin:0 0}
+
+/* ── Stage ── */
+#stage-el{position:absolute;background:#1f6feb;color:#fff;padding:8px 48px;border-radius:6px;font-size:12px;font-weight:700;letter-spacing:3px;cursor:grab;user-select:none;box-shadow:0 0 20px #1f6feb44;z-index:10;border:1px solid #388bfd}
+#stage-el:active{cursor:grabbing}
+
+/* ── Static Chart ── */
+#static-chart{position:absolute;left:30px;top:90px;background:#fff;color:#000;border-radius:8px;padding:10px;font-family:Arial,sans-serif;font-size:9px;user-select:none;box-shadow:0 4px 24px #00000066;min-width:900px}
+.chart-stage{background:#4472c4;color:#fff;text-align:center;padding:6px 0;font-weight:700;font-size:11px;letter-spacing:2px;border-radius:4px;margin-bottom:8px}
+.chart-body{display:grid;grid-template-columns:1fr 90px 1fr;gap:0;align-items:stretch}
+.chart-col-left{display:flex;flex-direction:column;gap:0}
+.chart-col-ramp{background:#c00000;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;font-size:9px;text-align:center;border-left:2px solid #999;border-right:2px solid #999;flex-shrink:0;padding:4px 2px}
+.chart-col-right{display:flex;flex-direction:column;gap:0}
+
+/* Zone header bars */
+.zone-header{display:flex;margin-bottom:2px}
+.zone-title{background:#4472c4;color:#fff;font-weight:700;font-size:9px;padding:2px 4px;text-align:center;flex:0 0 28px;display:flex;align-items:center;justify-content:center}
+.zone-tier-headers{display:flex;flex:1}
+.zone-tier-cell{text-align:center;font-weight:700;font-size:8px;padding:2px 0;flex:1}
+.tier-gold{background:#ffd966}
+.tier-platinum{background:#d9d9d9}
+.tier-vip{background:#ffffff;border:1px solid #ccc}
+.tier-vvip{background:#ffe699}
+
+/* Section blocks */
+.chart-section{margin-bottom:0}
+.section-label-row{display:flex;align-items:stretch}
+.section-tag{background:#4472c4;color:#fff;font-weight:700;font-size:9px;padding:2px 4px;writing-mode:horizontal-tb;text-align:center;width:28px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.section-tag-right{background:#4472c4;color:#fff;font-weight:700;font-size:9px;padding:2px 4px;writing-mode:horizontal-tb;text-align:center;width:28px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.section-rows{flex:1}
+.chart-row{display:flex;align-items:center}
+.row-num{font-size:8px;font-weight:700;color:#555;width:20px;text-align:center;flex-shrink:0}
+.row-num-right{font-size:8px;font-weight:700;color:#555;width:20px;text-align:center;flex-shrink:0}
+.seat-cell{flex:1;text-align:center;font-size:7px;padding:2px 0;border:1px solid #bbb;min-width:0}
+
+/* Q Manager rows */
+.qmgr-block{margin:2px 0}
+.qmgr-label-row{display:flex;align-items:stretch}
+.qmgr-tag{background:#7030a0;color:#fff;font-weight:700;font-size:8px;padding:2px 4px;width:28px;text-align:center;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.qmgr-tag-right{background:#7030a0;color:#fff;font-weight:700;font-size:8px;padding:2px 4px;width:28px;text-align:center;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.qmgr-rows{flex:1}
+.qmgr-row{display:flex;align-items:center;background:#f3e8ff}
+
+/* Footer */
+.chairs-footer{text-align:center;font-weight:700;font-size:9px;color:#333;padding:4px 0;background:#f2f2f2;border:1px solid #ccc;margin-top:2px;border-top:2px solid #999}
+
+/* ── Sections (editor) ── */
+.section{position:absolute;background:#161b22cc;border:1.5px solid #30363d;border-radius:10px;min-width:100px;user-select:none;transition:border-color .15s,box-shadow .15s}
+.section.selected{border-color:#58a6ff;box-shadow:0 0 0 2px #58a6ff33}
+.sec-header{display:flex;align-items:center;gap:4px;padding:5px 8px 4px;cursor:grab;border-radius:8px 8px 0 0;background:#21262d}
+.sec-header:active{cursor:grabbing}
+.sec-label{font-size:10px;font-weight:700;color:#58a6ff;text-transform:uppercase;letter-spacing:.07em;flex:1;outline:none;min-width:30px;border-bottom:1px solid transparent}
+.sec-label:focus{border-bottom-color:#58a6ff}
+.sec-body{padding:3px 6px 4px}
+.sec-footer{padding:2px 6px 5px;display:flex;align-items:center;gap:4px}
+.sec-add-row{font-size:10px;padding:2px 8px;border-radius:4px;border:1px dashed #30363d;background:transparent;color:#8b949e;cursor:pointer;transition:all .12s}
+.sec-add-row:hover{border-color:#58a6ff;color:#58a6ff}
+.sec-del{margin-left:auto;width:18px;height:18px;border-radius:4px;border:none;background:#f8514922;color:#f85149;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .12s}
+.sec-del:hover{background:#f85149;color:#fff}
+
+/* ── Rows ── */
+.row-wrap{display:flex;align-items:center;gap:3px;margin:1.5px 0}
+.row-label{font-size:9px;font-weight:700;color:#8b949e;width:15px;text-align:center;flex-shrink:0;outline:none;cursor:text}
+.row-label:focus{color:#58a6ff}
+.seats-wrap{display:flex;gap:2px}
+.row-add-seat,.row-del{width:15px;height:17px;border-radius:3px;border:none;font-size:11px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .12s}
+.row-wrap:hover .row-add-seat,.row-wrap:hover .row-del{opacity:1}
+.row-add-seat{background:#21262d;color:#8b949e}
+.row-add-seat:hover{background:#388bfd22;color:#58a6ff}
+.row-del{background:#f8514922;color:#f85149}
+.row-del:hover{background:#f85149;color:#fff}
+
+/* ── Seats ── */
+.seat{width:17px;height:17px;border-radius:3px;border:1px solid #30363d;background:#21262d;color:#8b949e;font-size:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative;transition:background .1s,border-color .1s;flex-shrink:0}
+.seat:hover{background:#388bfd22;border-color:#58a6ff;color:#58a6ff}
+.seat:hover .seat-x{display:flex}
+.seat.selected{background:#1f6feb;color:#fff;border-color:#388bfd}
+.seat.wheelchair{background:#f0883e22;border-color:#f0883e}
+.seat.companion{background:#3fb95022;border-color:#3fb950}
+.seat.restricted{background:#f8514922;border-color:#f85149;opacity:.6}
+.seat-x{display:none;position:absolute;top:-4px;right:-4px;width:9px;height:9px;background:#f85149;color:#fff;border-radius:50%;font-size:8px;cursor:pointer;align-items:center;justify-content:center;z-index:5;line-height:1}
+
+/* ── Context menu ── */
+#ctx-menu{position:fixed;background:#161b22;border:1px solid #30363d;border-radius:8px;padding:4px 0;z-index:1000;box-shadow:0 8px 32px #00000088;display:none;min-width:155px}
+#ctx-menu.show{display:block}
+.ctx-item{padding:7px 13px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .1s}
+.ctx-item:hover{background:#388bfd22;color:#58a6ff}
+.ctx-sep{height:1px;background:#30363d;margin:3px 0}
+
+/* ── Add Section Modal ── */
+#modal-bg{display:none;position:fixed;inset:0;background:#00000088;z-index:500;align-items:center;justify-content:center}
+#modal-bg.show{display:flex}
+#modal{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:22px;width:320px}
+#modal h3{font-size:13px;margin-bottom:14px;color:#58a6ff}
+#modal label{font-size:11px;color:#8b949e;display:block;margin-bottom:3px}
+#modal input{width:100%;padding:7px 10px;border-radius:6px;border:1px solid #30363d;background:#0d1117;color:#e6edf3;font-size:12px;margin-bottom:11px;outline:none}
+#modal input:focus{border-color:#58a6ff}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
+.modal-btns button{padding:7px 16px;border-radius:6px;font-size:12px;cursor:pointer;border:1px solid #30363d;transition:all .12s}
+.btn-cancel{background:transparent;color:#8b949e}
+.btn-cancel:hover{border-color:#8b949e;color:#e6edf3}
+.btn-ok{background:#1f6feb;border-color:#388bfd;color:#fff}
+.btn-ok:hover{background:#388bfd}
+
+/* ── Legend ── */
+#legend{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:12px;background:#161b22cc;border:1px solid #30363d;border-radius:20px;padding:6px 16px;z-index:50}
+.leg{display:flex;align-items:center;gap:5px;font-size:10px;color:#8b949e}
+.leg-dot{width:12px;height:12px;border-radius:2px;flex-shrink:0}
+</style>
+</head>
+<body>
+
+<div id="toolbar">
+  <span class="logo">HERMES</span>
+  <div class="tb-sep"></div>
+  <button class="tb-btn" id="btn-add-sec">＋ Section</button>
+  <button class="tb-btn" id="btn-undo">↩</button>
+  <button class="tb-btn" id="btn-redo">↪</button>
+  <div class="tb-sep"></div>
+  <button class="tb-btn" id="btn-zoom-out">－</button>
+  <span id="zoom-label">100%</span>
+  <button class="tb-btn" id="btn-zoom-in">＋</button>
+  <button class="tb-btn" id="btn-fit">⊡ Fit</button>
+  <div class="tb-sep"></div>
+  <button class="tb-btn" id="btn-export">⬇ Export</button>
+  <span id="status">Drag sections · Right-click seats for options</span>
+</div>
+
+<div id="canvas-wrap"><div id="canvas">
+
+<!-- ═══════════════════════════════════════════════════════════════
+     STATIC SEATING CHART
+════════════════════════════════════════════════════════════════ -->
+<div id="static-chart">
+
+  <!-- STAGE -->
+  <div class="chart-stage">STAGE</div>
+
+  <!-- BODY: Left Column (Zone 1) | Ramp | Right Column (Zone 2) -->
+  <div class="chart-body">
+
+    <!-- ═══ LEFT COLUMN (Zone 1): D, Q-Mgr, C, B, A ═══ -->
+    <div class="chart-col-left">
+
+      <!-- Zone 1 Header -->
+      <div class="zone-header">
+        <div class="zone-title">Zone 1</div>
+        <div class="zone-tier-headers">
+          <div class="zone-tier-cell tier-gold">Gold</div>
+          <div class="zone-tier-cell tier-platinum">Platinum</div>
+          <div class="zone-tier-cell tier-vip">VIP</div>
+          <div class="zone-tier-cell tier-vvip">VVIP</div>
+        </div>
+      </div>
+
+      <!-- Section D (rows 19-24, nearest stage) -->
+      <div class="chart-section">
+        <div class="section-label-row">
+          <div class="section-tag">D</div>
+          <div class="section-rows">
+            <!-- Row 19: Gold=19, Platinum=13, VIP=7, VVIP=1 -->
+            <div class="chart-row">
+              <div class="row-num">19</div>
+              <div class="seat-cell tier-gold">19</div>
+              <div class="seat-cell tier-platinum">13</div>
+              <div class="seat-cell tier-vip">7</div>
+              <div class="seat-cell tier-vvip">1</div>
+            </div>
+            <!-- Row 20: Gold=20, Platinum=14, VIP=8, VVIP=2 -->
+            <div class="chart-row">
+              <div class="row-num">20</div>
+              <div class="seat-cell tier-gold">20</div>
+              <div class="seat-cell tier-platinum">14</div>
+              <div class="seat-cell tier-vip">8</div>
+              <div class="seat-cell tier-vvip">2</div>
+            </div>
+            <!-- Row 21: Gold=21, Platinum=15, VIP=9, VVIP=3 -->
+            <div class="chart-row">
+              <div class="row-num">21</div>
+              <div class="seat-cell tier-gold">21</div>
+              <div class="seat-cell tier-platinum">15</div>
+              <div class="seat-cell tier-vip">9</div>
+              <div class="seat-cell tier-vvip">3</div>
+            </div>
+            <!-- Row 22: Gold=22, Platinum=16, VIP=10, VVIP=4 -->
+            <div class="chart-row">
+              <div class="row-num">22</div>
+              <div class="seat-cell tier-gold">22</div>
+              <div class="seat-cell tier-platinum">16</div>
+              <div class="seat-cell tier-vip">10</div>
+              <div class="seat-cell tier-vvip">4</div>
+            </div>
+            <!-- Row 23: Gold=23, Platinum=17, VIP=11, VVIP=5 -->
+            <div class="chart-row">
+              <div class="row-num">23</div>
+              <div class="seat-cell tier-gold">23</div>
+              <div class="seat-cell tier-platinum">17</div>
+              <div class="seat-cell tier-vip">11</div>
+              <div class="seat-cell tier-vvip">5</div>
+            </div>
+            <!-- Row 24: Gold=24, Platinum=18, VIP=12, VVIP=6 -->
+            <div class="chart-row">
+              <div class="row-num">24</div>
+              <div class="seat-cell tier-gold">24</div>
+              <div class="seat-cell tier-platinum">18</div>
+              <div class="seat-cell tier-vip">12</div>
+              <div class="seat-cell tier-vvip">6</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Q Manager rows (Zone 1, rows 31-40): Gold=31-40, Platinum=21-30, VIP=11-20, VVIP=1-10 -->
+      <div class="qmgr-block">
+        <div class="qmgr-label-row">
+          <div class="qmgr-tag">Q Mgr</div>
+          <div class="qmgr-rows">
+            <div class="qmgr-row"><div class="row-num">31</div><div class="seat-cell tier-gold">31</div><div class="seat-cell tier-platinum">21</div><div class="seat-cell tier-vip">11</div><div class="seat-cell tier-vvip">1</div></div>
+            <div class="qmgr-row"><div class="row-num">32</div><div class="seat-cell tier-gold">32</div><div class="seat-cell tier-platinum">22</div><div class="seat-cell tier-vip">12</div><div class="seat-cell tier-vvip">2</div></div>
+            <div class="qmgr-row"><div class="row-num">33</div><div class="seat-cell tier-gold">33</div><div class="seat-cell tier-platinum">23</div><div class="seat-cell tier-vip">13</div><div class="seat-cell tier-vvip">3</div></div>
+            <div class="qmgr-row"><div class="row-num">34</div><div class="seat-cell tier-gold">34</div><div class="seat-cell tier-platinum">24</div><div class="seat-cell tier-vip">14</div><div class="seat-cell tier-vvip">4</div></div>
+            <div class="qmgr-row"><div class="row-num">35</div><div class="seat-cell tier-gold">35</div><div class="seat-cell tier-platinum">25</div><div class="seat-cell tier-vip">15</div><div class="seat-cell tier-vvip">5</div></div>
+            <div class="qmgr-row"><div class="row-num">36</div><div class="seat-cell tier-gold">36</div><div class="seat-cell tier-platinum">26</div><div class="seat-cell tier-vip">16</div><div class="seat-cell tier-vvip">6</div></div>
+            <div class="qmgr-row"><div class="row-num">37</div><div class="seat-cell tier-gold">37</div><div class="seat-cell tier-platinum">27</div><div class="seat-cell tier-vip">17</div><div class="seat-cell tier-vvip">7</div></div>
+            <div class="qmgr-row"><div class="row-num">38</div><div class="seat-cell tier-gold">38</div><div class="seat-cell tier-platinum">28</div><div class="seat-cell tier-vip">18</div><div class="seat-cell tier-vvip">8</div></div>
+            <div class="qmgr-row"><div class="row-num">39</div><div class="seat-cell tier-gold">39</div><div class="seat-cell tier-platinum">29</div><div class="seat-cell tier-vip">19</div><div class="seat-cell tier-vvip">9</div></div>
+            <div class="qmgr-row"><div class="row-num">40</div><div class="seat-cell tier-gold">40</div><div class="seat-cell tier-platinum">30</div><div class="seat-cell tier-vip">20</div><div class="seat-cell tier-vvip">10</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section C (rows 31-40): Row 31 Gold=31, Platinum=21, VIP=11, VVIP=1; Row 40 Gold=40, Platinum=30, VIP=20, VVIP=10 -->
+      <div class="chart-section">
+        <div class="section-label-row">
+          <div class="section-tag">C</div>
+          <div class="section-rows">
+            <div class="chart-row"><div class="row-num">31</div><div class="seat-cell tier-gold">31</div><div class="seat-cell tier-platinum">21</div><div class="seat-cell tier-vip">11</div><div class="seat-cell tier-vvip">1</div></div>
+            <div class="chart-row"><div class="row-num">32</div><div class="seat-cell tier-gold">32</div><div class="seat-cell tier-platinum">22</div><div class="seat-cell tier-vip">12</div><div class="seat-cell tier-vvip">2</div></div>
+            <div class="chart-row"><div class="row-num">33</div><div class="seat-cell tier-gold">33</div><div class="seat-cell tier-platinum">23</div><div class="seat-cell tier-vip">13</div><div class="seat-cell tier-vvip">3</div></div>
+            <div class="chart-row"><div class="row-num">34</div><div class="seat-cell tier-gold">34</div><div class="seat-cell tier-platinum">24</div><div class="seat-cell tier-vip">14</div><div class="seat-cell tier-vvip">4</div></div>
+            <div class="chart-row"><div class="row-num">35</div><div class="seat-cell tier-gold">35</div><div class="seat-cell tier-platinum">25</div><div class="seat-cell tier-vip">15</div><div class="seat-cell tier-vvip">5</div></div>
+            <div class="chart-row"><div class="row-num">36</div><div class="seat-cell tier-gold">36</div><div class="seat-cell tier-platinum">26</div><div class="seat-cell tier-vip">16</div><div class="seat-cell tier-vvip">6</div></div>
+            <div class="chart-row"><div class="row-num">37</div><div class="seat-cell tier-gold">37</div><div class="seat-cell tier-platinum">27</div><div class="seat-cell tier-vip">17</div><div class="seat-cell tier-vvip">7</div></div>
+            <div class="chart-row"><div class="row-num">38</div><div class="seat-cell tier-gold">38</div><div class="seat-cell tier-platinum">28</div><div class="seat-cell tier-vip">18</div><div class="seat-cell tier-vvip">8</div></div>
+            <div class="chart-row"><div class="row-num">39</div><div class="seat-cell tier-gold">39</div><div class="seat-cell tier-platinum">29</div><div class="seat-cell tier-vip">19</div><div class="seat-cell tier-vvip">9</div></div>
+            <div class="chart-row"><div class="row-num">40</div><div class="seat-cell tier-gold">40</div><div class="seat-cell tier-platinum">30</div><div class="seat-cell tier-vip">20</div><div class="seat-cell tier-vvip">10</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section B (rows 31-40) -->
+      <div class="chart-section">
+        <div class="section-label-row">
+          <div class="section-tag">B</div>
+          <div class="section-rows">
+            <div class="chart-row"><div class="row-num">31</div><div class="seat-cell tier-gold">31</div><div class="seat-cell tier-platinum">21</div><div class="seat-cell tier-vip">11</div><div class="seat-cell tier-vvip">1</div></div>
+            <div class="chart-row"><div class="row-num">32</div><div class="seat-cell tier-gold">32</div><div class="seat-cell tier-platinum">22</div><div class="seat-cell tier-vip">12</div><div class="seat-cell tier-vvip">2</div></div>
+            <div class="chart-row"><div class="row-num">33</div><div class="seat-cell tier-gold">33</div><div class="seat-cell tier-platinum">23</div><div class="seat-cell tier-vip">13</div><div class="seat-cell tier-vvip">3</div></div>
+            <div class="chart-row"><div class="row-num">34</div><div class="seat-cell tier-gold">34</div><div class="seat-cell tier-platinum">24</div><div class="seat-cell tier-vip">14</div><div class="seat-cell tier-vvip">4</div></div>
+            <div class="chart-row"><div class="row-num">35</div><div class="seat-cell tier-gold">35</div><div class="seat-cell tier-platinum">25</div><div class="seat-cell tier-vip">15</div><div class="seat-cell tier-vvip">5</div></div>
+            <div class="chart-row"><div class="row-num">36</div><div class="seat-cell tier-gold">36</div><div class="seat-cell tier-platinum">26</div><div class="seat-cell tier-vip">16</div><div class="seat-cell tier-vvip">6</div></div>
+            <div class="chart-row"><div class="row-num">37</div><div class="seat-cell tier-gold">37</div><div class="seat-cell tier-platinum">27</div><div class="seat-cell tier-vip">17</div><div class="seat-cell tier-vvip">7</div></div>
+            <div class="chart-row"><div class="row-num">38</div><div class="seat-cell tier-gold">38</div><div class="seat-cell tier-platinum">28</div><div class="seat-cell tier-vip">18</div><div class="seat-cell tier-vvip">8</div></div>
+            <div class="chart-row"><div class="row-num">39</div><div class="seat-cell tier-gold">39</div><div class="seat-cell tier-platinum">29</div><div class="seat-cell tier-vip">19</div><div class="seat-cell tier-vvip">9</div></div>
+            <div class="chart-row"><div class="row-num">40</div><div class="seat-cell tier-gold">40</div><div class="seat-cell tier-platinum">30</div>
